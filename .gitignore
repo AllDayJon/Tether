@@ -1,0 +1,19 @@
+# compiled binary
+tether
+
+# go test binaries
+*.test
+
+# build output
+/dist/
+
+# editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+.directory
