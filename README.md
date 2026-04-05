@@ -97,8 +97,8 @@ tmux new -s work
 # 2. Start the tether daemon
 tether start
 
-# 3. Watch your current pane
-tether watch %0
+# 3. Watch your current pane (no argument = current pane)
+tether watch
 
 # 4. Open the chat split (40% right side)
 tether chat
@@ -185,7 +185,8 @@ Run `tether config init` to create `~/.tether/config.json` with defaults.
 tether start                    Start the background daemon
 tether stop                     Stop the daemon
 tether status                   Daemon status, watched panes, mode, allow list
-tether watch <pane>             Start watching a pane (e.g. %0, %1)
+tether doctor                   Check all dependencies (tmux, claude CLI, daemon)
+tether watch [pane]             Watch a pane — omit to watch the current pane
 tether unwatch <pane>           Stop watching a pane
 tether chat                     Open chat as a vertical tmux split
 tether ask <question>           One-shot question, prints to stdout
@@ -222,7 +223,7 @@ Tether reads terminal output from panes you explicitly tell it to watch. Here is
 
 ### What tether reads
 
-Tether only reads panes you have explicitly added with `tether watch <pane>`. It does not scan your filesystem, read other tmux windows, or watch panes you have not opted in. You can see exactly which panes are being watched at any time:
+Tether only reads panes you have explicitly added with `tether watch`. It does not scan your filesystem, read other tmux windows, or watch panes you have not opted in. You can see exactly which panes are being watched at any time:
 
 ```sh
 tether status
