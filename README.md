@@ -216,18 +216,68 @@ tether version                  Print version
 
 ---
 
-## Data
+## Privacy
 
-Everything lives in `~/.tether/`:
+Tether reads terminal output from panes you explicitly tell it to watch. Here is the full picture of what happens to that data.
+
+### What tether reads
+
+Tether only reads panes you have explicitly added with `tether watch <pane>`. It does not scan your filesystem, read other tmux windows, or watch panes you have not opted in. You can see exactly which panes are being watched at any time:
+
+```sh
+tether status
+```
+
+And stop watching a pane at any time:
+
+```sh
+tether unwatch %0
+```
+
+### Where data lives
+
+Terminal output is held **in memory only** inside the daemon process. It is never written to disk by tether. When the daemon stops, the buffer is gone.
+
+The only files tether writes are:
 
 | Path | Contents |
 |------|----------|
-| `tether.sock` | IPC socket |
-| `daemon.pid` | Daemon process ID |
-| `daemon.log` | Daemon log output |
-| `conversation.json` | Persistent chat history |
-| `config.json` | User configuration |
-| `chat-debug.log` | Context/token debug log (`tether chat --debug`) |
+| `~/.tether/tether.sock` | IPC socket (local only) |
+| `~/.tether/daemon.pid` | Daemon process ID |
+| `~/.tether/daemon.log` | Daemon log (startup/stop events, errors) |
+| `~/.tether/conversation.json` | Your chat history |
+| `~/.tether/config.json` | Your config |
+| `~/.tether/chat-debug.log` | Optional token/context debug log (`--debug` flag only) |
+
+### What gets sent to Claude
+
+When you send a message, tether assembles a prompt containing:
+
+1. A fixed system prompt (visible in [`internal/conversation/conversation.go`](internal/conversation/conversation.go))
+2. Your recent conversation history
+3. A **filtered subset** of new terminal output since your last message — not the full buffer
+
+The filtering is intentional: lines are scored for relevance to your question and only the most pertinent ones are included. You can inspect exactly what was sent by running `tether chat --debug` and reading `~/.tether/chat-debug.log`.
+
+That prompt is passed to the **Claude Code CLI** (`claude -p …`) on your machine. Tether has no servers of its own — it does not phone home, collect analytics, or transmit data to anyone. The only network traffic is what the Claude CLI sends to Anthropic's API, which is the same traffic as using Claude Code normally and is governed by [Anthropic's privacy policy](https://www.anthropic.com/privacy).
+
+### Sensitive data
+
+If a pane you are watching displays passwords, API keys, or other secrets, those could appear in the context sent to Claude. Be mindful of which panes you watch:
+
+- **Do not watch a pane** that is running a secrets manager, displaying credentials, or showing anything you would not paste into Claude yourself.
+- Use `tether unwatch <pane>` before entering sensitive contexts.
+- The daemon log (`~/.tether/daemon.log`) records pane IDs but **not** pane content.
+
+### Auditing
+
+Tether is fully open source. The complete data path — from `tmux capture-pane` to the prompt sent to Claude — can be traced through the source:
+
+- Capture: [`internal/watcher/tmux.go`](internal/watcher/tmux.go)
+- Buffering: [`internal/watcher/ringbuffer.go`](internal/watcher/ringbuffer.go)
+- Filtering: [`internal/context/relevance.go`](internal/context/relevance.go)
+- Prompt assembly: [`internal/conversation/conversation.go`](internal/conversation/conversation.go)
+- Claude call: [`internal/chat/tui.go`](internal/chat/tui.go)
 
 ---
 
