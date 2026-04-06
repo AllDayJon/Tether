@@ -36,6 +36,7 @@
       </a>
       <div class="nav-links">
         <a href="#how-it-works">How it works</a>
+        <a href="#smart-context">How it filters</a>
         <a href="#modes">Modes</a>
         <a href="#security">Security</a>
         <a href="#install">Install</a>
@@ -174,8 +175,78 @@
     </div>
   </section>
 
+  <!-- SMART CONTEXT -->
+  <section class="section section-alt" id="smart-context">
+    <div class="container">
+      <div class="section-label">Smart context</div>
+      <h2 class="section-title">Everything captured. Only what matters sent.</h2>
+      <p class="section-sub">
+        Tether keeps a full buffer of your terminal output locally. When you ask a question, it scores every
+        line for relevance and only sends the parts that actually matter — so Claude has real awareness
+        without you burning through your token budget on irrelevant output.
+      </p>
+
+      <div class="context-pipeline">
+        <div class="pipeline-step">
+          <div class="pipeline-num">1</div>
+          <div class="pipeline-body">
+            <div class="pipeline-title">Capture everything</div>
+            <div class="pipeline-desc">All output from your watched panes is buffered in memory — up to 200 lines per pane. Nothing is written to disk, nothing is sent anywhere yet.</div>
+            <div class="pipeline-stat">200 lines captured</div>
+          </div>
+        </div>
+        <div class="pipeline-arrow">↓</div>
+        <div class="pipeline-step">
+          <div class="pipeline-num">2</div>
+          <div class="pipeline-body">
+            <div class="pipeline-title">Score for relevance</div>
+            <div class="pipeline-desc">When you ask a question, each line is scored by keyword overlap with your question. Lines about nginx score high for an nginx question. Lines about a file listing don't.</div>
+            <div class="pipeline-stat">Top 25 lines selected</div>
+          </div>
+        </div>
+        <div class="pipeline-arrow">↓</div>
+        <div class="pipeline-step">
+          <div class="pipeline-num">3</div>
+          <div class="pipeline-body">
+            <div class="pipeline-title">Delta only</div>
+            <div class="pipeline-desc">Tether tracks what Claude has already seen. Follow-up messages only include new output since your last question — not the full buffer again.</div>
+            <div class="pipeline-stat">Only new lines on follow-ups</div>
+          </div>
+        </div>
+        <div class="pipeline-arrow">↓</div>
+        <div class="pipeline-step pipeline-step-result">
+          <div class="pipeline-num pipeline-num-result">✓</div>
+          <div class="pipeline-body">
+            <div class="pipeline-title">Focused prompt sent to Claude</div>
+            <div class="pipeline-desc">Claude gets a rolling session summary, your conversation history, and the filtered terminal context — typically under 700 tokens total.</div>
+            <div class="pipeline-stat-row">
+              <div class="pipeline-stat-item">
+                <div class="stat-val">~2,700</div>
+                <div class="stat-label">tokens raw</div>
+              </div>
+              <div class="stat-arrow">→</div>
+              <div class="pipeline-stat-item stat-item-good">
+                <div class="stat-val">~20</div>
+                <div class="stat-label">tokens sent</div>
+              </div>
+              <div class="pipeline-stat-item stat-item-savings">
+                <div class="stat-val">−95%</div>
+                <div class="stat-label">typical reduction</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="context-debug-note">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Run <code>tether tokens</code> to see your current buffer size, or <code>tether chat --debug</code> to log exactly what gets sent to Claude on every message.
+      </div>
+    </div>
+  </section>
+
   <!-- MODES -->
-  <section class="section section-alt" id="modes">
+  <section class="section" id="modes">
     <div class="container">
       <div class="section-label">Operating modes</div>
       <h2 class="section-title">You set the level of trust</h2>
@@ -400,7 +471,11 @@
     <div class="container">
       <div class="section-label">Installation</div>
       <h2 class="section-title">Up in four commands</h2>
-      <p class="section-sub">Requires Go 1.22+, tmux, and the Claude Code CLI (<code>claude</code> on PATH and logged in).</p>
+      <p class="section-sub">
+        Tether is built for developers and engineers who live in the terminal.
+        You'll need <strong>tmux</strong> for session capture, <strong>Go 1.22+</strong> to build from source,
+        and a <strong>Claude Code CLI</strong> subscription (<code>claude</code> on PATH and logged in) — Tether uses it for all AI calls, so there's no separate API key or billing.
+      </p>
 
       <div class="install-steps">
         <div class="install-step">
@@ -554,11 +629,12 @@ tether chat        # open chat split (40% right)</code></pre>
       <div class="faq-list">
         <div class="faq-item">
           <button class="faq-q" aria-expanded="false">
-            Does Tether work without tmux?
+            How is this different from just using Claude Code?
             <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="faq-a">
-            <p>Not currently — tmux is required for pane capture and command injection via <code>send-keys</code>. A PTY proxy mode that removes the tmux dependency is planned for a future release.</p>
+            <p>The core difference is who's doing the work. With most AI tools, you hand the AI a goal and it executes — great for planned tasks, but it only knows what you tell it. The moment you go off-script and start doing things yourself, the AI loses context entirely.</p>
+            <p>Tether is built for when <em>you're</em> already at the wheel. You work normally — SSH into servers, tail logs, poke around — and Tether keeps Claude up to speed in the background. When you want help, you just ask. No copy-paste, no re-explaining what you've been doing for the last ten minutes.</p>
           </div>
         </div>
 
@@ -594,12 +670,11 @@ tether chat        # open chat split (40% right)</code></pre>
 
         <div class="faq-item">
           <button class="faq-q" aria-expanded="false">
-            How is this different from just using Claude Code?
+            Does Tether work without tmux?
             <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="faq-a">
-            <p>The core difference is who's doing the work. With most AI tools, you hand the AI a goal and it executes — great for planned tasks, but it only knows what you tell it. The moment you go off-script and start doing things yourself, the AI loses context entirely.</p>
-            <p>Tether is built for when <em>you're</em> already at the wheel. You work normally — SSH into servers, tail logs, poke around — and Tether keeps Claude up to speed in the background. When you want help, you just ask. No copy-paste, no re-explaining what you've been doing for the last ten minutes.</p>
+            <p>Not currently — tmux is required for pane capture and command injection via <code>send-keys</code>. A PTY proxy mode that removes the tmux dependency is planned for a future release.</p>
           </div>
         </div>
       </div>

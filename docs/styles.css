@@ -1446,6 +1446,132 @@ kbd {
 
 .faq-a a:hover { color: var(--cyan); }
 
+/* ============ SMART CONTEXT PIPELINE ============ */
+
+.context-pipeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 640px;
+  margin: 48px auto 0;
+}
+
+.pipeline-step {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+}
+
+.pipeline-step-result {
+  border-color: var(--blue);
+  background: var(--blue-dim);
+}
+
+.pipeline-arrow {
+  text-align: center;
+  color: var(--text-3);
+  font-size: 18px;
+  line-height: 1;
+  padding: 6px 0;
+  margin-left: 32px;
+}
+
+.pipeline-num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--border-2);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  margin-top: 2px;
+}
+
+.pipeline-num-result {
+  background: var(--blue);
+  color: #fff;
+}
+
+.pipeline-body { flex: 1; }
+
+.pipeline-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.pipeline-desc {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.pipeline-stat {
+  display: inline-block;
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--cyan);
+  background: var(--cyan-dim);
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.pipeline-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pipeline-stat-item { text-align: center; }
+
+.stat-val {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--mono);
+  color: var(--text-2);
+  line-height: 1.1;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
+.stat-arrow {
+  font-size: 18px;
+  color: var(--text-3);
+}
+
+.stat-item-good .stat-val  { color: var(--cyan); }
+.stat-item-savings .stat-val { color: var(--green); }
+
+.context-debug-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 640px;
+  margin: 20px auto 0;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.context-debug-note svg { flex-shrink: 0; }
+.context-debug-note code { color: var(--text-2); }
+
 /* ============ SCROLLBAR ============ */
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
