@@ -8,7 +8,7 @@
 
 You drive. Claude rides along. When you need help, it's already up to speed.
 
-[![Version](https://img.shields.io/badge/version-0.7.0-blue?style=flat-square)](https://github.com/allday/tether/releases)
+[![Version](https://img.shields.io/badge/version-0.7.0-blue?style=flat-square)](https://github.com/AllDayJon/Tether/releases)
 [![Go](https://img.shields.io/badge/go-1.22+-00ADD8?style=flat-square&logo=go)](https://golang.org)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Requires tmux](https://img.shields.io/badge/requires-tmux-1DB954?style=flat-square)](https://github.com/tmux/tmux)
@@ -75,7 +75,7 @@ Tether flips that model. **You work in your terminal like normal.** Tether watch
 ## Installation
 
 ```sh
-git clone https://github.com/allday/tether
+git clone https://github.com/AllDayJon/Tether
 cd tether
 go install .
 ```
