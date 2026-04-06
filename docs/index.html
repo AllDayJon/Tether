@@ -137,25 +137,16 @@
   <section class="section" id="how-it-works">
     <div class="container">
       <div class="section-label">The idea</div>
-      <h2 class="section-title">Work how you actually work</h2>
+      <h2 class="section-title">Stop re-explaining what you just did.</h2>
       <p class="section-sub">
-        Most AI tools put the AI in the driver's seat. You describe a task, it runs commands, you approve.
-        The moment you want to do something yourself — SSH into a box, dig through logs, poke around a prod issue —
-        you leave the AI's world entirely. It loses context. You re-explain everything when you come back.
+        You're the one doing the work. You're in the terminal — SSH'd into a box, tailing logs, running commands,
+        figuring things out. When you want a second opinion from AI, you have to stop, copy output, explain
+        what you've been doing, and rebuild the context from scratch. Every single time.
       </p>
       <p class="section-sub">
-        Tether flips that model.
+        Tether fixes that. It watches your terminal in the background while you work. When you ask a question,
+        Claude already knows what's been happening. No copy-paste. No re-explaining. No context loss.
       </p>
-
-      <!-- Comparison callout -->
-      <div class="compare-callout">
-        <div class="compare-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        </div>
-        <div>
-          <strong>How Tether fits alongside Claude Code and Cursor</strong> — Those tools put Claude in the driver's seat: you describe a task, it plans and executes. Tether is for when <em>you're</em> already at the wheel — SSH sessions, live log triage, ad-hoc debugging. They complement each other well; use whichever fits what you're doing.
-        </div>
-      </div>
 
       <div class="how-grid">
         <div class="how-card">
@@ -607,7 +598,8 @@ tether chat        # open chat split (40% right)</code></pre>
             <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="faq-a">
-            <p>Claude Code is designed for planned coding tasks — you hand it a goal, it executes a plan. Tether is for when <em>you're</em> already doing the work: live debugging, log triage, SSH sessions, exploratory ops. You stay in control; Tether just makes Claude available with full context of what you've been doing. The two tools work well together.</p>
+            <p>The core difference is who's doing the work. With most AI tools, you hand the AI a goal and it executes — great for planned tasks, but it only knows what you tell it. The moment you go off-script and start doing things yourself, the AI loses context entirely.</p>
+            <p>Tether is built for when <em>you're</em> already at the wheel. You work normally — SSH into servers, tail logs, poke around — and Tether keeps Claude up to speed in the background. When you want help, you just ask. No copy-paste, no re-explaining what you've been doing for the last ten minutes.</p>
           </div>
         </div>
       </div>
