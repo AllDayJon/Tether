@@ -21,7 +21,8 @@ import (
 type oscParser struct {
 	buf     *session.Buffer
 	state   parseState
-	oscBody []byte // accumulates the body of an OSC sequence
+	oscBody   []byte // accumulates the body of an OSC sequence
+	oscSawESC bool   // true when the last byte in stateOSC was ESC (first byte of ESC \ ST)
 
 	// Output accumulation: lines captured between OSC C and OSC D.
 	capturing bool
@@ -72,15 +73,22 @@ func (p *oscParser) Write(data []byte) (int, error) {
 		case stateOSC:
 			if b == 0x07 { // BEL terminates OSC
 				p.handleOSC(string(p.oscBody))
+				p.oscSawESC = false
 				p.state = stateNormal
 			} else if b == 0x1b {
-				// ESC inside OSC — next byte should be \ (ST)
-				// We'll catch it on the next iteration.
-			} else if b == '\\' && len(p.oscBody) > 0 {
-				// Likely the \ of ESC \
+				// First byte of ESC \ (ST) — record and wait for the backslash.
+				p.oscSawESC = true
+			} else if b == '\\' && p.oscSawESC {
+				// ESC \ — proper String Terminator.
 				p.handleOSC(string(p.oscBody))
+				p.oscSawESC = false
 				p.state = stateNormal
 			} else {
+				if p.oscSawESC {
+					// The ESC was not followed by \ — not an ST, keep accumulating.
+					p.oscBody = append(p.oscBody, 0x1b)
+					p.oscSawESC = false
+				}
 				p.oscBody = append(p.oscBody, b)
 			}
 		}
@@ -89,14 +97,16 @@ func (p *oscParser) Write(data []byte) (int, error) {
 }
 
 // handleNormalByte accumulates non-OSC bytes. During a command execution,
-// it also appends to the output capture buffer.
+// bytes go only into the capture buffer — lineBuf is not accumulated while
+// capturing to prevent duplicate output when the command block is flushed.
 func (p *oscParser) handleNormalByte(b byte) {
 	if p.capturing {
 		p.outLines = append(p.outLines, b)
+		return
 	}
-	// Line splitting for the general buffer (non-command output).
+	// Line splitting for non-command output only.
 	if b == '\n' {
-		if !p.capturing && p.lineBuf != "" {
+		if p.lineBuf != "" {
 			clean := stripANSI(p.lineBuf)
 			if clean != "" {
 				p.buf.Append([]string{clean})

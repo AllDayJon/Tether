@@ -268,12 +268,26 @@ func Uninstall() error {
 	fishConf := filepath.Join(home, ".config", "fish", "conf.d", "tether.fish")
 	os.Remove(fishConf)
 
-	// Remove ~/.tether directory (scripts, socket, logs, conversation, summary).
+	// Remove individual files from ~/.tether rather than the whole directory,
+	// to avoid pulling active session sockets out from under running sessions.
 	dir, err := ipc.Dir()
 	if err != nil {
 		return err
 	}
-	return os.RemoveAll(dir)
+	for _, name := range []string{
+		"daemon.log",
+		"conversation.json",
+		"summary.txt",
+		"config.json",
+		"tether.bash",
+		"tether.zsh",
+		"tether.fish",
+	} {
+		os.Remove(filepath.Join(dir, name)) // best-effort
+	}
+	// Remove the directory itself only if it is now empty.
+	os.Remove(dir) // no-op if non-empty
+	return nil
 }
 
 func removeLinesContaining(path, marker string) {

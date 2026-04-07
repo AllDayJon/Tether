@@ -33,21 +33,18 @@ func New() *Buffer {
 }
 
 // Write implements io.Writer so the PTY output stream can write directly.
-// Splits on newlines; incomplete lines are held until the next Write.
+// Splits on newlines; incomplete lines are held in partial until the next Write.
 func (b *Buffer) Write(data []byte) (int, error) {
+	b.mu.Lock()
 	text := b.partial + string(data)
 	parts := strings.Split(text, "\n")
 	// All but the last element are complete lines.
 	complete := parts[:len(parts)-1]
 	b.partial = parts[len(parts)-1]
-
-	if len(complete) > 0 {
-		b.mu.Lock()
-		for _, line := range complete {
-			b.appendLocked(line)
-		}
-		b.mu.Unlock()
+	for _, line := range complete {
+		b.appendLocked(line)
 	}
+	b.mu.Unlock()
 	return len(data), nil
 }
 
