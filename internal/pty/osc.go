@@ -128,7 +128,9 @@ func (p *oscParser) handleOSC(body string) {
 	switch {
 	case payload == "A": // prompt start — flush any pending line buffer
 		if p.lineBuf != "" {
-			p.buf.Append([]string{p.lineBuf})
+			if clean := stripANSI(p.lineBuf); clean != "" {
+				p.buf.Append([]string{clean})
+			}
 			p.lineBuf = ""
 		}
 
@@ -137,7 +139,9 @@ func (p *oscParser) handleOSC(body string) {
 
 	case payload == "C": // command executing — start capturing output
 		if p.lineBuf != "" {
-			p.buf.Append([]string{p.lineBuf})
+			if clean := stripANSI(p.lineBuf); clean != "" {
+				p.buf.Append([]string{clean})
+			}
 			p.lineBuf = ""
 		}
 		p.capturing = true
