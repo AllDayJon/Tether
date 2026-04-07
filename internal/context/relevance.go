@@ -152,9 +152,6 @@ func selectLines(lines, keywords []string, opts Options) []string {
 		if recencySet[i] {
 			continue
 		}
-		if len(keywords) == 0 {
-			continue
-		}
 		s := scoreLine(strings.ToLower(line), keywords)
 
 		// Dedup penalty: lines sent in the previous turn are deprioritized.
