@@ -2,20 +2,20 @@ package summary
 
 import (
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 	"tether/internal/ipc"
-	"tether/internal/watcher"
-	"os"
+	"tether/internal/session"
 )
 
 const (
 	DefaultInterval = 5 * time.Minute
 	contextLines    = 200 // lines fed to the summariser
-	minLinesForGen  = 20  // don't generate a summary until we have this many lines
+	minLinesForGen  = 20  // don't generate until we have this many lines
 )
 
 const summaryPrompt = `Summarize what this person has been doing in their terminal in 3-5 sentences.
@@ -27,7 +27,7 @@ Terminal output:
 
 // Generator periodically produces a prose summary of terminal activity.
 type Generator struct {
-	w        *watcher.Watcher
+	buf      *session.Buffer
 	interval time.Duration
 	filePath string
 
@@ -39,9 +39,9 @@ type Generator struct {
 }
 
 // New creates a Generator. filePath is where the summary is persisted across restarts.
-func New(w *watcher.Watcher, interval time.Duration, filePath string) *Generator {
+func New(buf *session.Buffer, interval time.Duration, filePath string) *Generator {
 	g := &Generator{
-		w:        w,
+		buf:      buf,
 		interval: interval,
 		filePath: filePath,
 		stopCh:   make(chan struct{}),
@@ -103,23 +103,9 @@ func (g *Generator) loop() {
 }
 
 func (g *Generator) regenerate() {
-	panes := g.w.WatchedPanes()
-	if len(panes) == 0 {
-		return
-	}
-
-	// Collect recent lines from all watched panes.
-	var lines []string
-	for _, id := range panes {
-		lines = append(lines, g.w.Last(id, contextLines)...)
-	}
+	lines := g.buf.Last(contextLines)
 	if len(lines) < minLinesForGen {
 		return
-	}
-
-	// Cap to contextLines total to keep prompt small.
-	if len(lines) > contextLines {
-		lines = lines[len(lines)-contextLines:]
 	}
 
 	prompt := summaryPrompt + strings.Join(lines, "\n")
@@ -140,9 +126,11 @@ func (g *Generator) regenerate() {
 	g.summary = result
 	g.mu.Unlock()
 
-	// Persist so it survives daemon restarts.
+	// Persist so it survives proxy restarts.
 	if g.filePath != "" {
-		os.WriteFile(g.filePath, []byte(result), 0600)
+		if err := os.WriteFile(g.filePath, []byte(result), 0600); err != nil {
+			log.Printf("[summary] failed to persist summary: %v", err)
+		}
 	}
 
 	log.Printf("[summary] updated (%d chars)", len(result))

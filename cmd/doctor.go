@@ -23,18 +23,6 @@ func init() {
 func runDoctor(_ *cobra.Command, _ []string) error {
 	ok := true
 
-	// ── tmux ─────────────────────────────────────────────────────────────────
-	if out, err := exec.Command("tmux", "-V").Output(); err != nil {
-		printCheck(false, "tmux", "not found — install tmux to use tether")
-		ok = false
-	} else {
-		version := string(out)
-		if len(version) > 0 && version[len(version)-1] == '\n' {
-			version = version[:len(version)-1]
-		}
-		printCheck(true, "tmux", version)
-	}
-
 	// ── claude CLI ───────────────────────────────────────────────────────────
 	claudePath, err := exec.LookPath("claude")
 	if err != nil {
@@ -44,34 +32,34 @@ func runDoctor(_ *cobra.Command, _ []string) error {
 		printCheck(true, "claude", claudePath)
 	}
 
-	// ── daemon ───────────────────────────────────────────────────────────────
+	// ── tether shell ─────────────────────────────────────────────────────────
 	conn, err := ipc.Dial()
 	if err != nil {
-		printCheck(false, "daemon", "not running — start with: tether start")
+		printCheck(false, "tether shell", "not running — start with: tether shell")
 		ok = false
 	} else {
 		defer conn.Close()
 		_ = ipc.SendMsg(conn, ipc.TypeStatus, nil)
 		var resp ipc.StatusResp
 		if err := ipc.Recv(conn, &resp); err != nil {
-			printCheck(false, "daemon", "connected but unresponsive")
+			printCheck(false, "tether shell", "connected but unresponsive")
 			ok = false
 		} else {
-			detail := fmt.Sprintf("running  (session: %s, mode: %s)", resp.TmuxSession, resp.Mode)
-			printCheck(true, "daemon", detail)
-
-			// ── watched panes ─────────────────────────────────────────────────
-			if len(resp.WatchedPanes) == 0 {
-				printCheck(false, "panes", "none watched — run: tether watch <pane-id>")
-			} else {
-				total := 0
-				for _, n := range resp.BufferSizes {
-					total += n
-				}
-				detail := fmt.Sprintf("%v  (%d lines buffered)", resp.WatchedPanes, total)
-				printCheck(true, "panes", detail)
-			}
+			detail := fmt.Sprintf("running  (shell: %s, mode: %s, buffer: %d lines)",
+				resp.Shell, resp.Mode, resp.BufferedLines)
+			printCheck(true, "tether shell", detail)
 		}
+	}
+
+	// ── shell integration ─────────────────────────────────────────────────────
+	// Check if tether install has been run (OSC 133 markers configured).
+	// We detect this by looking for the integration file in ~/.tether/.
+	integrationPath, _ := shellIntegrationInstalledPath()
+	if integrationPath != "" {
+		printCheck(true, "shell integration", integrationPath)
+	} else {
+		printCheck(false, "shell integration", "not installed — run: tether install")
+		ok = false
 	}
 
 	if !ok {
@@ -90,5 +78,5 @@ func printCheck(pass bool, label, detail string) {
 	if !pass {
 		icon = "✗"
 	}
-	fmt.Printf("  %s  %-10s  %s\n", icon, label, detail)
+	fmt.Printf("  %s  %-20s  %s\n", icon, label, detail)
 }

@@ -8,26 +8,32 @@ import (
 
 // Options controls how SelectForQuestion trims pane context.
 type Options struct {
-	TopK     int // max top-scoring lines to include (default 20)
-	LastN    int // always include the last N lines for recency (default 5)
-	MaxLines int // hard cap per pane after merging (default 25)
+	TopK      int                    // max top-scoring lines to include
+	LastN     int                    // always include the last N lines for recency
+	MaxLines  int                    // hard cap per pane after merging
+	SentLines map[string]struct{}    // lines sent in the previous turn — deprioritized
 }
 
 func (o *Options) defaults() {
 	if o.TopK <= 0 {
-		o.TopK = 20
+		o.TopK = 150
 	}
 	if o.LastN <= 0 {
-		o.LastN = 5
+		o.LastN = 30
 	}
 	if o.MaxLines <= 0 {
-		o.MaxLines = 25
+		o.MaxLines = 200
 	}
 }
 
 // DefaultOptions returns sensible defaults for context selection.
 func DefaultOptions() Options {
-	return Options{TopK: 20, LastN: 5, MaxLines: 25}
+	return Options{TopK: 150, LastN: 30, MaxLines: 200}
+}
+
+// ExportKeywords extracts the signal keywords from a question (exported for debug UI).
+func ExportKeywords(question string) []string {
+	return extractKeywords(question)
 }
 
 // stopWords are common English words that carry no signal for relevance.
@@ -67,12 +73,30 @@ type scoredLine struct {
 	text  string
 }
 
-// scoreLine counts how many keywords appear in line (case-insensitive).
+// errorSignals are substrings that indicate a line is likely relevant to
+// debugging regardless of keyword match. They get a score bonus.
+var errorSignals = []string{
+	"error", "err:", "errno", "failed", "failure",
+	"panic", "fatal", "exception", "traceback", "stack trace",
+	"warning", "warn:", "undefined", "not found", "no such",
+	"permission denied", "connection refused", "timeout", "timed out",
+	"exit status", "signal", "killed", "segfault", "core dumped",
+}
+
+// scoreLine counts how many keywords appear in line (case-insensitive),
+// plus a bonus for lines that contain error/warning signals.
 func scoreLine(lineLower string, keywords []string) int {
 	n := 0
 	for _, kw := range keywords {
 		if strings.Contains(lineLower, kw) {
 			n++
+		}
+	}
+	// Error signal bonus: these lines are almost always relevant to debugging.
+	for _, sig := range errorSignals {
+		if strings.Contains(lineLower, sig) {
+			n += 3
+			break // one bonus per line is enough
 		}
 	}
 	return n
@@ -128,11 +152,17 @@ func selectLines(lines, keywords []string, opts Options) []string {
 		if recencySet[i] {
 			continue
 		}
-		if len(keywords) == 0 {
-			// No keywords: score by nothing; we'll just use recency.
-			continue
-		}
 		s := scoreLine(strings.ToLower(line), keywords)
+
+		// Dedup penalty: lines sent in the previous turn are deprioritized.
+		// They're still selected if they score high (e.g. error + keyword match),
+		// but won't crowd out new context for weak matches.
+		if opts.SentLines != nil {
+			if _, wasSent := opts.SentLines[line]; wasSent {
+				s -= 3
+			}
+		}
+
 		if s > 0 {
 			scored = append(scored, scoredLine{idx: i, score: s, text: line})
 		}
@@ -142,15 +172,22 @@ func selectLines(lines, keywords []string, opts Options) []string {
 	sort.Slice(scored, func(i, j int) bool {
 		return scored[i].score > scored[j].score
 	})
-	topK := opts.TopK
-	if len(scored) > topK {
-		scored = scored[:topK]
+	if len(scored) > opts.TopK {
+		scored = scored[:opts.TopK]
 	}
 
-	// Build a merged, deduplicated index set.
+	// Expand each selected index to its surrounding command block so Claude
+	// gets the command that produced relevant output, not just isolated lines.
+	selectedIdxs := make([]int, len(scored))
+	for i := range scored {
+		selectedIdxs[i] = scored[i].idx
+	}
+	expandedIdxs := expandToCommandBlocks(lines, selectedIdxs)
+
+	// Merge expanded block indices with recency set.
 	idxSet := make(map[int]bool)
-	for _, sl := range scored {
-		idxSet[sl.idx] = true
+	for _, idx := range expandedIdxs {
+		idxSet[idx] = true
 	}
 	for i := recencyStart; i < n; i++ {
 		idxSet[i] = true
@@ -163,15 +200,115 @@ func selectLines(lines, keywords []string, opts Options) []string {
 	}
 	sort.Ints(merged)
 
-	// Apply hard cap.
+	// Apply hard cap — prefer recency (keep the tail).
 	if len(merged) > opts.MaxLines {
-		// Keep the last MaxLines (prefer recency when capping).
 		merged = merged[len(merged)-opts.MaxLines:]
 	}
 
+	const maxLineChars = 500 // cap individual lines — prevents one giant line from blowing token budget
 	out := make([]string, len(merged))
 	for i, idx := range merged {
-		out[i] = lines[idx]
+		l := lines[idx]
+		if len(l) > maxLineChars {
+			l = l[:maxLineChars] + "…"
+		}
+		out[i] = l
 	}
 	return out
+}
+
+// maxExpandLines is the largest output segment we'll expand to in full.
+// Larger segments (e.g. ps aux, find, large log dumps) have self-contained
+// lines — the matching line already carries all the context needed, so
+// pulling in hundreds of surrounding lines wastes tokens.
+const maxExpandLines = 40
+
+// expandToCommandBlocks expands a set of selected line indices to include
+// their surrounding command blocks. For each selected output line, we look up
+// which segment it belongs to (using the same prompt-detection logic as
+// TruncateBlocks) and include the full segment plus the preceding prompt
+// segment (the command that produced the output).
+//
+// Large segments (>maxExpandLines) are NOT expanded — just the selected
+// lines plus a small ±context window are returned.
+func expandToCommandBlocks(lines []string, selectedIdxs []int) []int {
+	if len(selectedIdxs) == 0 {
+		return nil
+	}
+
+	segs := splitSegments(lines)
+	if len(segs) == 0 {
+		return selectedIdxs
+	}
+
+	// Map each line index to its segment index.
+	lineToSeg := make([]int, len(lines))
+	for si, seg := range segs {
+		for i := seg.start; i < seg.end; i++ {
+			lineToSeg[i] = si
+		}
+	}
+
+	idxSet := make(map[int]bool)
+
+	for _, idx := range selectedIdxs {
+		if idx < 0 || idx >= len(lines) {
+			continue
+		}
+		si := lineToSeg[idx]
+		seg := segs[si]
+		segLen := seg.end - seg.start
+
+		if segLen > maxExpandLines {
+			// Large output block: include just the matching line ± a small window.
+			// The individual line is self-contained (ps aux, find, etc.).
+			const window = 2
+			start := idx - window
+			if start < seg.start {
+				start = seg.start
+			}
+			end := idx + window + 1
+			if end > seg.end {
+				end = seg.end
+			}
+			for i := start; i < end; i++ {
+				idxSet[i] = true
+			}
+			// Include the command (preceding prompt segment) if it's short.
+			if si > 0 && segs[si-1].isPrompt {
+				ps := segs[si-1]
+				for i := ps.start; i < ps.end; i++ {
+					idxSet[i] = true
+				}
+			}
+		} else {
+			// Small output block: include the entire segment for full context.
+			for i := seg.start; i < seg.end; i++ {
+				idxSet[i] = true
+			}
+			// Include the preceding prompt segment (the command).
+			if si > 0 && segs[si-1].isPrompt && !segs[si].isPrompt {
+				ps := segs[si-1]
+				for i := ps.start; i < ps.end; i++ {
+					idxSet[i] = true
+				}
+			}
+			// If selected line is a prompt, include the following output.
+			if segs[si].isPrompt && si+1 < len(segs) {
+				ns := segs[si+1]
+				if ns.end-ns.start <= maxExpandLines {
+					for i := ns.start; i < ns.end; i++ {
+						idxSet[i] = true
+					}
+				}
+			}
+		}
+	}
+
+	result := make([]int, 0, len(idxSet))
+	for i := range idxSet {
+		result = append(result, i)
+	}
+	sort.Ints(result)
+	return result
 }

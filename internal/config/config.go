@@ -11,21 +11,11 @@ import (
 // Config holds user-configurable settings. All fields have sensible defaults
 // so the file is optional — tether works without it.
 type Config struct {
-	// Chat split width as a percentage of terminal width (default 40).
-	ChatSplitPercent int `json:"chat_split_percent"`
-
 	// Claude model to use for ask/chat (empty string = claude CLI default).
 	AskModel string `json:"ask_model"`
 
-	// Lines to fetch from the daemon buffer per pane before relevance filtering.
+	// Lines to fetch from the session buffer before relevance filtering.
 	AskLines int `json:"ask_lines"`
-
-	// Auto-watch the current pane when the daemon starts (default true).
-	AutoWatch bool `json:"auto_watch"`
-
-	// tmux key for opening the chat split (default "g", used as prefix+g).
-	// Set to "" to disable the binding.
-	ChatKey string `json:"chat_key"`
 
 	// ── Mode / safety ────────────────────────────────────────────────────────
 
@@ -43,11 +33,8 @@ type Config struct {
 // Defaults returns a Config populated with the built-in defaults.
 func Defaults() Config {
 	return Config{
-		ChatSplitPercent: 40,
-		AskModel:         "",
-		AskLines:         200,
-		AutoWatch:        true,
-		ChatKey:          "g",
+		AskModel: "",
+		AskLines: 200,
 		Allow: []string{
 			"ls", "cat", "head", "tail", "grep", "ps", "df", "free",
 			"top", "htop", "systemctl status", "journalctl", "ping",
