@@ -213,9 +213,9 @@ shell output (PTY stream)
   conversation.json  Chat history
   summary.txt        Rolling session summary
   config.json        User config
-  tether.bash        Shell integration script (bash)
-  tether.zsh         Shell integration script (zsh)
-  tether.fish        Shell integration script (fish)
+  shell-integration.bash  Shell integration script (bash)
+  shell-integration.zsh   Shell integration script (zsh)
+  shell-integration.fish  Shell integration script (fish)
 
 internal/
   pty/               PTY proxy, OSC 133 parser
