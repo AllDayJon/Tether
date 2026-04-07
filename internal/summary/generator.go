@@ -128,7 +128,9 @@ func (g *Generator) regenerate() {
 
 	// Persist so it survives proxy restarts.
 	if g.filePath != "" {
-		os.WriteFile(g.filePath, []byte(result), 0600)
+		if err := os.WriteFile(g.filePath, []byte(result), 0600); err != nil {
+			log.Printf("[summary] failed to persist summary: %v", err)
+		}
 	}
 
 	log.Printf("[summary] updated (%d chars)", len(result))

@@ -43,7 +43,7 @@ The full session buffer stays local. Claude gets a filtered snapshot of what's r
 └──────────────────────┬──────────────────────────────────────┘
                        │ PTY output stream (real-time)
 ┌──────────────────────▼──────────────────────────────────────┐
-│  Session Buffer  (~/.tether/tether-<pid>.sock)              │
+│  Session Buffer  (~/.tether/sessions/<pid>.sock)              │
 │                                                             │
 │  ┌────────────────┐  ┌──────────────┐  ┌─────────────────┐  │
 │  │ session.Buffer │  │ Summary      │  │ Mode / Policy   │  │
@@ -98,7 +98,7 @@ A thread-safe ring buffer that receives output from the PTY proxy.
 - `Delta()` returns lines added since the last call and advances a cursor — used by the chat TUI to fetch only new output each turn
 - `Append()` accepts pre-split lines from OSC 133 events; `Write()` implements `io.Writer` for raw PTY output
 
-Each `tether shell` session registers its own Unix socket (`~/.tether/tether-<pid>.sock`). The chat TUI discovers all active sessions via directory listing.
+Each `tether shell` session registers its own Unix socket (`~/.tether/sessions/<pid>.sock`). The chat TUI discovers all active sessions via directory listing.
 
 ### 4. Summary Generator (`internal/summary/`)
 
@@ -208,8 +208,8 @@ shell output (PTY stream)
 
 ```
 ~/.tether/
-  tether-<pid>.sock  Per-session IPC socket
-  daemon.log         Daemon log (startup/stop, errors)
+  sessions/<pid>.sock  Per-session IPC socket
+  daemon.log           Daemon log (startup/stop, errors)
   conversation.json  Chat history
   summary.txt        Rolling session summary
   config.json        User config

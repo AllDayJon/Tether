@@ -231,7 +231,7 @@ Tether has no servers and collects no analytics. The only network traffic is the
 
 | Path | Contents |
 |------|----------|
-| `~/.tether/tether-<pid>.sock` | Per-session IPC socket |
+| `~/.tether/sessions/<pid>.sock` | Per-session IPC socket |
 | `~/.tether/daemon.log` | Startup/stop events and errors |
 | `~/.tether/conversation.json` | Chat history |
 | `~/.tether/summary.txt` | Rolling session summary |

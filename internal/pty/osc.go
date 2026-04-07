@@ -65,8 +65,11 @@ func (p *oscParser) Write(data []byte) (int, error) {
 				// ESC \ as a lone sequence — not an OSC terminator here.
 				p.state = stateNormal
 			} else {
-				// Some other escape sequence — not our concern.
+				// Some other escape sequence (e.g. CSI ESC[). Forward both the
+				// ESC and the current byte so lineBuf accumulates the full sequence
+				// and stripANSI can remove it later.
 				p.state = stateNormal
+				p.handleNormalByte(0x1b)
 				p.handleNormalByte(b)
 			}
 

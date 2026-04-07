@@ -179,8 +179,7 @@ func selectLines(lines, keywords []string, opts Options) []string {
 	// Expand each selected index to its surrounding command block so Claude
 	// gets the command that produced relevant output, not just isolated lines.
 	selectedIdxs := make([]int, len(scored))
-	for i, sl := range selectedIdxs {
-		_ = sl
+	for i := range scored {
 		selectedIdxs[i] = scored[i].idx
 	}
 	expandedIdxs := expandToCommandBlocks(lines, selectedIdxs)
