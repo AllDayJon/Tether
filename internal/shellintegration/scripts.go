@@ -279,9 +279,9 @@ func Uninstall() error {
 		"conversation.json",
 		"summary.txt",
 		"config.json",
-		"tether.bash",
-		"tether.zsh",
-		"tether.fish",
+		"shell-integration.bash",
+		"shell-integration.zsh",
+		"shell-integration.fish",
 	} {
 		os.Remove(filepath.Join(dir, name)) // best-effort
 	}
