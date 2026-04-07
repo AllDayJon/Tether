@@ -61,8 +61,10 @@ When you need help, it's already up to speed — no copy-paste, no re-explaining
 curl -L https://github.com/AllDayJon/Tether/releases/latest/download/tether-darwin-arm64 -o tether
 chmod +x tether && sudo mv tether /usr/local/bin/
 
-# Verify checksum
+# Verify checksum (Linux)
 curl -L https://github.com/AllDayJon/Tether/releases/latest/download/checksums.txt | sha256sum --check --ignore-missing
+# Verify checksum (macOS)
+curl -L https://github.com/AllDayJon/Tether/releases/latest/download/checksums.txt | grep tether-darwin-arm64 | shasum -a 256 -c
 ```
 
 **Or build from source** (requires Go 1.22+)

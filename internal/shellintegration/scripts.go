@@ -310,7 +310,11 @@ func removeLinesContaining(path, marker string) {
 			kept = append(kept, line)
 		}
 	}
-	os.WriteFile(path, []byte(strings.Join(kept, "\n")), 0644)
+	mode := os.FileMode(0644)
+	if info, err := os.Stat(path); err == nil {
+		mode = info.Mode()
+	}
+	os.WriteFile(path, []byte(strings.Join(kept, "\n")), mode)
 }
 
 func appendIfMissing(path, content, marker string) error {
