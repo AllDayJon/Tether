@@ -102,7 +102,7 @@ That's it. Work normally in terminal 1. Ask Claude anything in terminal 2.
 | **Persistent context** | Claude sees your terminal history before you ask anything |
 | **Relevance filtering** | Lines are scored against your question — only what matters gets sent |
 | **Error surfacing** | Errors and failures are always prioritised, even when your keywords don't match |
-| **Cross-turn dedup** | Lines already sent aren't resent; only new context each turn |
+| **Cross-turn dedup** | Previously sent lines are deprioritised so new context is preferred each turn |
 | **SSH-transparent** | Captures everything in your local PTY — SSH output included, no remote install |
 | **Conversation memory** | Chat history persists across sessions and compacts automatically |
 | **Rolling summary** | A background summariser keeps a running narrative of your session |
@@ -177,7 +177,7 @@ tether shell                    Start your shell through the PTY proxy
 tether chat                     Open the chat TUI
 tether ask <question>           One-shot question, prints to stdout
 tether mode [watch|assist|act]  Show or change the current mode
-tether status                   Active sessions, mode, session allow list
+tether status                   Current session status, mode, session allow list
 tether doctor                   Check all dependencies
 tether tokens                   Show context buffer size
 tether summary                  Print the rolling session summary

@@ -248,6 +248,7 @@ func (c *Conversation) BuildPrompt(question string, panes []ipc.PaneContext, sum
 	}
 	if hasContent {
 		sb.WriteString("[Recent terminal activity]\n")
+		truncated := false
 		for _, p := range panes {
 			if len(p.Lines) == 0 {
 				continue
@@ -256,16 +257,19 @@ func (c *Conversation) BuildPrompt(question string, panes []ipc.PaneContext, sum
 			for _, l := range p.Lines {
 				if ctxChars+len(l) > maxContextChars {
 					sb.WriteString("… context truncated (line budget exceeded) …\n")
-					goto doneContext
+					truncated = true
+					break
 				}
 				sb.WriteString(l)
 				sb.WriteByte('\n')
 				ctxChars += len(l) + 1
 			}
 			sb.WriteString("```\n")
+			if truncated {
+				break
+			}
 		}
-	doneContext:
-		sb.WriteString("```\n\n")
+		sb.WriteByte('\n')
 	}
 
 	// The new message.

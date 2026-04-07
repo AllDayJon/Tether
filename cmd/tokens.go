@@ -46,7 +46,9 @@ func runTokens(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		// Delta context (separate connection so we don't advance the real cursor).
+		// Delta context — note: this advances the session buffer's delta cursor,
+		// which may affect the next chat turn. A proper fix requires per-client
+		// cursors in the IPC layer.
 		conn2, err2 := ipc.Dial()
 		if err2 == nil {
 			defer conn2.Close()

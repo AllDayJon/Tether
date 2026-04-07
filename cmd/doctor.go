@@ -59,6 +59,7 @@ func runDoctor(_ *cobra.Command, _ []string) error {
 		printCheck(true, "shell integration", integrationPath)
 	} else {
 		printCheck(false, "shell integration", "not installed — run: tether install")
+		ok = false
 	}
 
 	if !ok {

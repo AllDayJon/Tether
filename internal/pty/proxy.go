@@ -115,6 +115,11 @@ func (p *Proxy) Start() error {
 	go func() {
 		defer p.wg.Done()
 		defer func() {
+			// Stop signal delivery before closing the channels to prevent a
+			// panic if a signal arrives after close but before the handler
+			// goroutine's signal.Stop runs.
+			signal.Stop(winchCh)
+			signal.Stop(usr1Ch)
 			close(winchCh)
 			close(usr1Ch)
 			term.Restore(int(os.Stdin.Fd()), oldState)

@@ -61,7 +61,7 @@ func (b *Buffer) Append(lines []string) {
 }
 
 func (b *Buffer) appendLocked(line string) {
-	idx := (b.head + b.total) % b.cap
+	idx := (b.head + b.storedLocked()) % b.cap
 	b.lines[idx] = line
 	b.total++
 	if b.total > b.cap {

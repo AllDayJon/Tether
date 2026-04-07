@@ -352,6 +352,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEsc:
 			return m, tea.Quit
 
+		case tea.KeyCtrlK:
+			// Abort a streaming response mid-flight.
+			if m.streaming && m.cancelStream != nil {
+				m.cancelStream()
+				m.cancelStream = nil
+				m.streaming = false
+				if m.streamBuf != "" {
+					m.streamBuf += "\n[cancelled]"
+					m.conv.Add("assistant", m.streamBuf)
+					m.lastResponse = m.streamBuf
+					m.streamBuf = ""
+					m.renderedMsgs = nil
+				}
+				m.err = ""
+				m.renderContent()
+			}
+
 		case tea.KeyCtrlC:
 			if m.streaming && m.cancelStream != nil {
 				// Cancel the running request, stay in chat.
