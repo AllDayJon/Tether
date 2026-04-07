@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Vet & test
+        run: |
+          go vet ./...
+          go test -race -count=1 ./...
+
+      - name: Build binaries
+        run: |
+          mkdir dist
+          VERSION="${GITHUB_REF_NAME}"
+          LDFLAGS="-s -w -X 'tether/cmd.Version=${VERSION}'"
+
+          GOOS=linux  GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/tether-linux-amd64  .
+          GOOS=linux  GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o dist/tether-linux-arm64  .
+          GOOS=darwin GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/tether-darwin-amd64 .
+          GOOS=darwin GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o dist/tether-darwin-arm64 .
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum tether-linux-amd64 tether-linux-arm64 tether-darwin-amd64 tether-darwin-arm64 \
+            > checksums.txt
+
+      - name: Extract changelog entry
+        id: changelog
+        run: |
+          VERSION_NUM="${GITHUB_REF_NAME#v}"
+          ENTRY=$(awk "/^## \[${VERSION_NUM}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md \
+            | sed '/^[[:space:]]*$/d' | sed '1s/^[[:space:]]*//')
+          echo "entry<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$ENTRY"    >> "$GITHUB_OUTPUT"
+          echo "EOF"       >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.entry }}
+          files: |
+            dist/tether-linux-amd64
+            dist/tether-linux-arm64
+            dist/tether-darwin-amd64
+            dist/tether-darwin-arm64
+            dist/checksums.txt

@@ -1,7 +1,6 @@
 // Package session provides an event-driven context buffer for the PTY proxy.
-// Instead of polling tmux every 750ms, the PTY proxy calls Append as bytes
-// arrive from the shell. Last and Delta expose the same interface the daemon
-// server already uses, so the IPC layer needs no changes.
+// The PTY proxy calls Append as bytes arrive from the shell; Last and Delta
+// expose the buffered lines to the daemon and chat TUI over IPC.
 package session
 
 import (

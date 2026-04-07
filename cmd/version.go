@@ -1,3 +1,5 @@
 package cmd
 
-const Version = "0.8.0" // 0.8 PTY proxy — tmux-free, event-driven context capture, inline overlay
+// Version is set at build time via -ldflags "-X tether/cmd.Version=<tag>".
+// Falls back to "dev" for local builds.
+var Version = "dev"
