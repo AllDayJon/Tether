@@ -9,14 +9,14 @@ import (
 
 var statusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Show daemon status",
+	Short: "Show tether status",
 	RunE:  runStatus,
 }
 
 func runStatus(cmd *cobra.Command, args []string) error {
 	conn, err := ipc.Dial()
 	if err != nil {
-		fmt.Println("tether: not running")
+		fmt.Println("tether: not running  (start with: tether shell)")
 		return nil
 	}
 	defer conn.Close()
@@ -31,16 +31,11 @@ func runStatus(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println("tether: running")
-	fmt.Printf("  tmux socket:  %s\n", resp.TmuxSocket)
-	fmt.Printf("  tmux session: %s\n", resp.TmuxSession)
-
-	if len(resp.WatchedPanes) == 0 {
-		fmt.Println("  watching:     (none — use `tether watch <pane-id>`)")
-	} else {
-		fmt.Println("  watching:")
-		for _, id := range resp.WatchedPanes {
-			fmt.Printf("    %s  (%d lines buffered)\n", id, resp.BufferSizes[id])
-		}
+	fmt.Printf("  shell:   %s\n", resp.Shell)
+	fmt.Printf("  mode:    %s\n", resp.Mode)
+	fmt.Printf("  buffer:  %d lines\n", resp.BufferedLines)
+	if len(resp.SessionAllow) > 0 {
+		fmt.Printf("  session allow: %v\n", resp.SessionAllow)
 	}
 	return nil
 }

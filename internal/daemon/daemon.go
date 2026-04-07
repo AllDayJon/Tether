@@ -7,40 +7,53 @@ import (
 	"os/signal"
 	"syscall"
 	"tether/internal/ipc"
+	"tether/internal/session"
 	"tether/internal/summary"
-	"tether/internal/watcher"
 )
 
-// Run is the daemon entry point.
-func Run(tmuxSocket, tmuxSession string) error {
+// Run starts the IPC server using the provided session buffer and exec function.
+// execFn is called when a TypeExec message is received — it writes the command
+// to the PTY shell. Run blocks until SIGTERM/SIGINT or a stop IPC message.
+func Run(buf *session.Buffer, shell string, execFn func(cmd string) error) error {
 	if err := ipc.EnsureDir(); err != nil {
 		return err
 	}
 
+	// Redirect all daemon log output to the log file so it doesn't pollute
+	// the terminal. The terminal is in raw mode during tether shell, so any
+	// output without \r\n causes misaligned text.
+	logPath, err := ipc.LogPath()
+	if err != nil {
+		return err
+	}
+	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return fmt.Errorf("cannot open log file: %w", err)
+	}
+	// logFile intentionally not closed — daemon lives for the process lifetime.
+	log.SetOutput(logFile)
 	log.SetFlags(log.LstdFlags | log.Lmsgprefix)
-	log.SetPrefix("[tether-daemon] ")
-	log.Printf("starting — socket=%s session=%s", tmuxSocket, tmuxSession)
+	log.SetPrefix("[tether] ")
+	log.Printf("starting — shell=%s", shell)
 
-	w := watcher.New(tmuxSocket, tmuxSession)
-	w.Start()
-	defer w.Stop()
-
-	// Start the rolling summary generator.
 	summaryPath, err := summary.DefaultPath()
 	if err != nil {
 		log.Printf("warning: cannot determine summary path: %v", err)
 	}
-	gen := summary.New(w, summary.DefaultInterval, summaryPath)
+	gen := summary.New(buf, summary.DefaultInterval, summaryPath)
 	gen.Start()
 	defer gen.Stop()
 
-	sockPath, err := ipc.SocketPath()
+	if err := ipc.EnsureSessionsDir(); err != nil {
+		return err
+	}
+	sockPath, err := ipc.SessionSocketPath(os.Getpid())
 	if err != nil {
 		return err
 	}
-	os.Remove(sockPath) // remove stale socket
+	os.Remove(sockPath) // remove stale socket from a previous run of this PID
 
-	srv := newServer(sockPath, w, gen, tmuxSocket, tmuxSession)
+	srv := newServer(sockPath, buf, gen, shell, execFn)
 	if err := srv.start(); err != nil {
 		return err
 	}
@@ -65,7 +78,7 @@ func Run(tmuxSocket, tmuxSession string) error {
 	}
 
 	os.Remove(pidPath)
-	log.Printf("daemon exiting")
+	log.Printf("tether exiting")
 	return nil
 }
 

@@ -19,10 +19,11 @@ var configCmd = &cobra.Command{
 To customise, edit ~/.tether/config.json. Missing keys fall back to defaults.
 
 Available settings:
-  chat_split_percent   Width of the chat pane as % of terminal (default: 40)
-  ask_model            Claude model for ask/chat; empty = CLI default (default: "")
-  ask_lines            Lines fetched per pane before relevance filtering (default: 200)
-  auto_watch           Auto-watch current pane on daemon start (default: true)`,
+  ask_model   Claude model for ask; empty = CLI default (default: "")
+  ask_lines   Lines fetched before relevance filtering (default: 200)
+  allow       Commands that auto-execute in Act mode
+  protect     Commands that always require approval
+  deny        Commands that are never run`,
 	RunE: runConfig,
 }
 
@@ -55,21 +56,14 @@ func runConfig(cmd *cobra.Command, args []string) error {
 	fmt.Println(sep)
 	fmt.Printf("TETHER CONFIG  %s\n", source)
 	fmt.Println(sep)
-	fmt.Printf("  %-26s %v\n", "chat_split_percent", cfg.ChatSplitPercent)
-	fmt.Printf("  %-26s %q\n", "ask_model", cfg.AskModel)
-	fmt.Printf("  %-26s %d\n", "ask_lines", cfg.AskLines)
-	fmt.Printf("  %-26s %v\n", "auto_watch", cfg.AutoWatch)
-	chatKeyDesc := cfg.ChatKey
-	if chatKeyDesc == "" {
-		chatKeyDesc = "(disabled)"
-	} else {
-		chatKeyDesc = fmt.Sprintf("%q  → prefix+%s opens chat split", cfg.ChatKey, cfg.ChatKey)
-	}
-	fmt.Printf("  %-26s %s\n", "chat_key", chatKeyDesc)
+	fmt.Printf("  %-12s %q\n", "ask_model", cfg.AskModel)
+	fmt.Printf("  %-12s %d\n", "ask_lines", cfg.AskLines)
+	fmt.Printf("  %-12s %d entries\n", "allow", len(cfg.Allow))
+	fmt.Printf("  %-12s %d entries\n", "protect", len(cfg.Protect))
+	fmt.Printf("  %-12s %d entries\n", "deny", len(cfg.Deny))
 	fmt.Println(sep)
 	fmt.Printf("  Edit %s to change settings.\n", p)
 	fmt.Println("  Run `tether config init` to create a default config file.")
-	fmt.Println("  Run `tether keybind install` to set up tmux key bindings (works from SSH panes too).")
 	return nil
 }
 
@@ -98,6 +92,6 @@ func runConfigInit(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("created %s\n", p)
-	fmt.Println("edit it to customise tether, then restart the daemon")
+	fmt.Println("edit it to customise tether, then restart tether shell")
 	return nil
 }

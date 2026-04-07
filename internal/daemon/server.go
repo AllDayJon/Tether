@@ -7,33 +7,33 @@ import (
 	"net"
 	"sync"
 	"tether/internal/ipc"
+	"tether/internal/session"
 	"tether/internal/summary"
-	"tether/internal/watcher"
 )
 
 type server struct {
-	sockPath    string
-	w           *watcher.Watcher
-	gen         *summary.Generator
-	tmuxSocket  string
-	tmuxSession string
-	listener    net.Listener
-	stopCh      chan struct{}
+	sockPath string
+	buf      *session.Buffer
+	gen      *summary.Generator
+	shell    string
+	execFn   func(cmd string) error // writes a command to the PTY shell
+	listener net.Listener
+	stopCh   chan struct{}
 
 	modeMu       sync.RWMutex
-	mode         ipc.Mode // current Watch/Assist/Act mode
-	sessionAllow []string // in-memory allow list, resets on daemon restart
+	mode         ipc.Mode
+	sessionAllow []string
 }
 
-func newServer(sockPath string, w *watcher.Watcher, gen *summary.Generator, tmuxSocket, tmuxSession string) *server {
+func newServer(sockPath string, buf *session.Buffer, gen *summary.Generator, shell string, execFn func(cmd string) error) *server {
 	return &server{
-		sockPath:    sockPath,
-		w:           w,
-		gen:         gen,
-		tmuxSocket:  tmuxSocket,
-		tmuxSession: tmuxSession,
-		stopCh:      make(chan struct{}),
-		mode:        ipc.ModeWatch, // safe default
+		sockPath: sockPath,
+		buf:      buf,
+		gen:      gen,
+		shell:    shell,
+		execFn:   execFn,
+		stopCh:   make(chan struct{}),
+		mode:     ipc.ModeWatch,
 	}
 }
 
@@ -80,26 +80,6 @@ func (s *server) handleConn(conn net.Conn) {
 func (s *server) dispatch(conn net.Conn, msg ipc.Msg) {
 	switch msg.Type {
 
-	case ipc.TypeWatch:
-		var p ipc.WatchPayload
-		if err := json.Unmarshal(msg.Payload, &p); err != nil {
-			s.writeErr(conn, "bad watch payload: "+err.Error())
-			return
-		}
-		s.w.Watch(p.PaneID)
-		log.Printf("watching pane %s", p.PaneID)
-		s.writeOK(conn)
-
-	case ipc.TypeUnwatch:
-		var p ipc.WatchPayload
-		if err := json.Unmarshal(msg.Payload, &p); err != nil {
-			s.writeErr(conn, "bad unwatch payload: "+err.Error())
-			return
-		}
-		s.w.Unwatch(p.PaneID)
-		log.Printf("unwatching pane %s", p.PaneID)
-		s.writeOK(conn)
-
 	case ipc.TypeSetMode:
 		var p ipc.SetModePayload
 		if err := json.Unmarshal(msg.Payload, &p); err != nil {
@@ -127,7 +107,6 @@ func (s *server) dispatch(conn net.Conn, msg ipc.Msg) {
 			return
 		}
 		s.modeMu.Lock()
-		// Avoid duplicates.
 		found := false
 		for _, existing := range s.sessionAllow {
 			if existing == p.Pattern {
@@ -152,24 +131,17 @@ func (s *server) dispatch(conn net.Conn, msg ipc.Msg) {
 		}{Patterns: allow})
 
 	case ipc.TypeStatus:
-		panes := s.w.WatchedPanes()
-		sizes := make(map[string]int, len(panes))
-		for _, id := range panes {
-			sizes[id] = s.w.BufferLen(id)
-		}
 		s.modeMu.RLock()
 		mode := s.mode
 		sessionAllow := make([]string, len(s.sessionAllow))
 		copy(sessionAllow, s.sessionAllow)
 		s.modeMu.RUnlock()
 		s.writeJSON(conn, ipc.StatusResp{
-			Running:      true,
-			TmuxSocket:   s.tmuxSocket,
-			TmuxSession:  s.tmuxSession,
-			WatchedPanes: panes,
-			BufferSizes:  sizes,
-			Mode:         mode,
-			SessionAllow: sessionAllow,
+			Running:       true,
+			Mode:          mode,
+			Shell:         s.shell,
+			BufferedLines: s.buf.Len(),
+			SessionAllow:  sessionAllow,
 		})
 
 	case ipc.TypeGetContext:
@@ -178,59 +150,51 @@ func (s *server) dispatch(conn net.Conn, msg ipc.Msg) {
 			json.Unmarshal(msg.Payload, &p)
 		}
 
-		panes := s.w.WatchedPanes()
-		resp := ipc.ContextResp{
-			Panes:   make([]ipc.PaneContext, 0, len(panes)),
-			Summary: s.gen.Get(),
-		}
-
+		var lines []string
 		if p.DeltaOnly {
-			// Return only lines added since the last get_context call.
-			for _, id := range panes {
-				delta := s.w.Delta(id)
-				if len(delta) > 0 {
-					resp.Panes = append(resp.Panes, ipc.PaneContext{PaneID: id, Lines: delta})
-				}
-			}
+			lines = s.buf.Delta()
 		} else {
 			n := p.NLines
 			if n <= 0 {
 				n = 50
 			}
-			for _, id := range panes {
-				resp.Panes = append(resp.Panes, ipc.PaneContext{
-					PaneID: id,
-					Lines:  s.w.Last(id, n),
-				})
-			}
+			lines = s.buf.Last(n)
 		}
-		s.writeJSON(conn, resp)
+
+		s.writeJSON(conn, ipc.ContextResp{
+			Lines:   lines,
+			Summary: s.gen.Get(),
+		})
 
 	case ipc.TypeClearBuffers:
-		s.w.ClearAll()
-		log.Printf("ring buffers cleared")
+		s.buf.Clear()
+		log.Printf("session buffer cleared")
 		s.writeOK(conn)
 
 	case ipc.TypeResetSeen:
-		s.w.ResetSeen()
-		log.Printf("seen cursors reset")
+		s.buf.ResetSeen()
+		log.Printf("seen cursor reset")
 		s.writeOK(conn)
 
-	case ipc.TypeExecInPane:
-		var p ipc.ExecInPanePayload
+	case ipc.TypeExec:
+		var p ipc.ExecPayload
 		if err := json.Unmarshal(msg.Payload, &p); err != nil {
-			s.writeErr(conn, "bad exec_in_pane payload: "+err.Error())
+			s.writeErr(conn, "bad exec payload: "+err.Error())
 			return
 		}
-		if p.PaneID == "" || p.Command == "" {
-			s.writeErr(conn, "exec_in_pane: pane_id and command are required")
+		if p.Command == "" {
+			s.writeErr(conn, "exec: command is required")
 			return
 		}
-		if err := s.w.SendKeys(p.PaneID, p.Command); err != nil {
-			s.writeErr(conn, "send-keys failed: "+err.Error())
+		if s.execFn == nil {
+			s.writeErr(conn, "exec: no shell attached")
 			return
 		}
-		log.Printf("exec in pane %s: %s", p.PaneID, p.Command)
+		if err := s.execFn(p.Command); err != nil {
+			s.writeErr(conn, "exec failed: "+err.Error())
+			return
+		}
+		log.Printf("exec: %s", p.Command)
 		s.writeOK(conn)
 
 	case ipc.TypeStop:
@@ -246,7 +210,7 @@ func (s *server) dispatch(conn net.Conn, msg ipc.Msg) {
 	}
 }
 
-func (s *server) writeOK(conn net.Conn)          { s.writeJSON(conn, ipc.OKResp{OK: true}) }
+func (s *server) writeOK(conn net.Conn)            { s.writeJSON(conn, ipc.OKResp{OK: true}) }
 func (s *server) writeErr(conn net.Conn, m string) {
 	log.Printf("error: %s", m)
 	s.writeJSON(conn, ipc.ErrResp{Error: m})

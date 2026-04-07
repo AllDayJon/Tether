@@ -55,7 +55,7 @@ func TestExtractKeywords_Empty(t *testing.T) {
 // ── scoreLine ─────────────────────────────────────────────────────────────────
 
 func TestScoreLine_MatchesKeywords(t *testing.T) {
-	score := scoreLine("nginx upstream timeout 502", []string{"nginx", "502"})
+	score := scoreLine("nginx upstream 502 bad gateway", []string{"nginx", "502"})
 	if score != 2 {
 		t.Errorf("expected score 2, got %d", score)
 	}
@@ -69,9 +69,24 @@ func TestScoreLine_NoMatch(t *testing.T) {
 }
 
 func TestScoreLine_EmptyKeywords(t *testing.T) {
-	score := scoreLine("nginx upstream timeout", nil)
+	score := scoreLine("nginx upstream 502 bad gateway", nil)
 	if score != 0 {
 		t.Errorf("expected score 0 with no keywords, got %d", score)
+	}
+}
+
+func TestScoreLine_ErrorSignalBoost(t *testing.T) {
+	// A line with an error signal should get +3 bonus on top of keyword score.
+	score := scoreLine("connection refused: dial tcp 127.0.0.1:5432", []string{"postgres"})
+	// "refused" is an error signal (+3), "postgres" doesn't match → score = 3
+	if score != 3 {
+		t.Errorf("expected error signal score 3, got %d", score)
+	}
+
+	// Keyword match + error signal: "postgres" matches (+1) + signal (+3) = 4
+	score2 := scoreLine("connection refused: postgres not running", []string{"postgres"})
+	if score2 != 4 {
+		t.Errorf("expected keyword+signal score 4, got %d", score2)
 	}
 }
 
