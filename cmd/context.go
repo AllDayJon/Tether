@@ -15,20 +15,20 @@ var contextCmd = &cobra.Command{
 	Use:   "context",
 	Short: "Show what context would be sent to Claude on the next ask",
 	Long: `Dumps the full prompt that tether would send to Claude — system instructions,
-terminal context from watched panes, and a placeholder question.
-Useful for verifying the daemon is capturing the right output.`,
+terminal context from the current session, and a placeholder question.
+Useful for verifying that tether is capturing the right output.`,
 	RunE: runContext,
 }
 
 func init() {
 	rootCmd.AddCommand(contextCmd)
-	contextCmd.Flags().IntVarP(&contextLines, "lines", "n", 200, "number of lines to fetch from daemon (relevance filtering selects the best ones)")
+	contextCmd.Flags().IntVarP(&contextLines, "lines", "n", 200, "number of lines to fetch (relevance filtering selects the best ones)")
 }
 
 func runContext(cmd *cobra.Command, args []string) error {
 	conn, err := ipc.Dial()
 	if err != nil {
-		fmt.Println("daemon not running — start with `tether start`")
+		fmt.Println("tether not running — start with: tether shell")
 		return nil
 	}
 	defer conn.Close()
@@ -42,24 +42,14 @@ func runContext(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("reading context: %w", err)
 	}
 
-	if len(resp.Panes) == 0 {
-		fmt.Println("no panes being watched — use `tether watch <pane-id>` first")
+	if len(resp.Lines) == 0 {
+		fmt.Println("no output captured yet — wait a moment and try again")
 		return nil
 	}
 
-	// Check if all panes are empty.
-	totalLines := 0
-	for _, p := range resp.Panes {
-		totalLines += len(p.Lines)
-	}
-	if totalLines == 0 {
-		fmt.Println("watching panes but no output captured yet — wait a moment and try again")
-		return nil
-	}
+	panes := []ipc.PaneContext{{PaneID: "session", Lines: resp.Lines}}
+	prompt := claude.BuildPrompt("<your question here>", panes)
 
-	prompt := claude.BuildPrompt("<your question here>", resp.Panes)
-
-	// Print with a clear header/footer so it's easy to read.
 	sep := strings.Repeat("─", 60)
 	fmt.Println(sep)
 	fmt.Println("PROMPT THAT WOULD BE SENT TO CLAUDE")

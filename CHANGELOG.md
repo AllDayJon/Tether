@@ -4,6 +4,40 @@ All notable changes to Tether are documented here.
 
 ---
 
+## [0.8.0] — 2026-04-06
+
+### Added
+- **PTY proxy** — `tether shell` replaces tmux pane watching entirely. Run your shell through Tether's PTY proxy; the daemon captures output with zero polling latency and proper line framing. tmux is no longer required.
+- **OSC 133 shell integration** — `tether install` writes integration scripts for bash, zsh, and fish. OSC 133 semantic markers tag each prompt and command block, enabling block-aware context scoring.
+- **Block-aware context scoring** — `expandToCommandBlocks` expands selected output lines to their surrounding command block (command + output together). Large blocks (>40 lines, e.g. `ps aux`) get a tight ±2 line window instead of full expansion, preventing token blowout.
+- **Cross-turn deduplication** — lines already sent to Claude in the previous turn are tracked in `SentLines` and penalised (−3) in the scorer. Stale context doesn't crowd out new output; high-signal lines (errors) still re-surface if they score above the penalty.
+- **Error signal boosting** — lines matching error/warning signals (`error`, `panic`, `failed`, `connection refused`, `timeout`, `permission denied`, etc.) receive a +3 score bonus, surfacing them even when the question keywords don't exactly match.
+- **Token cost per message** — chat TUI shows `↑ ~Ntok ↓ ~Ntok` after each assistant message (estimated prompt and response tokens). Uses `formatTokens()` with `k` suffix for ≥1000.
+- **`/debug` mode in chat** — type `/debug` to toggle a debug block after each response showing IPC diagnostics, selected keywords, context line counts (fetched vs. filtered), and a per-component token breakdown (system / history / summary / context).
+- **History compression in prompts** — the last 3 full exchanges are included verbatim; older assistant responses are dropped to save tokens. Claude is informed of the omission count.
+- **macOS support** — `tether install` detects macOS and writes to `~/.bash_profile` instead of `~/.bashrc`. Post-install message also reflects the correct file per platform.
+- **Per-session Unix sockets** — each `tether shell` session registers its own socket path so multiple sessions can run concurrently. `tether chat` auto-discovers all active sessions.
+- **Abort / retry / copy in TUI** — streaming responses can be cancelled mid-flight; previous responses have retry and copy-to-clipboard actions.
+- **Markdown rendering** — assistant responses are rendered with lipgloss-styled markdown (bold, code blocks, bullet lists) rather than plain text.
+- **Timestamps** — each message pair shows a timestamp in the chat view.
+
+### Changed
+- `tether chat` is now a standalone command — no tmux split required. Run it in any terminal alongside your `tether shell` session.
+- Context pipeline moved out of `BuildPrompt` into `launchClaude` — `SelectForQuestion` and `TruncatePanes` are called in the TUI before building the prompt, giving the TUI full control and enabling dedup tracking.
+- `bufio.Scanner` token limit increased from 64 KB to 4 MB in `ipc.Recv` — fixes "token too long" error when fetching large context over IPC.
+- Per-line character cap of 500 chars — very long lines (e.g. minified JS, base64 blobs) are truncated with `…` to avoid token blowout.
+- Context section hard cap of 20 000 chars (~5 k tokens) — stops at budget regardless of line count.
+- Session summary capped at 1 000 chars in prompt — the summary is a brief narrative, not a transcript.
+- System prompt updated from "tmux session" to "terminal session".
+- `DefaultOptions`: TopK 150, LastN 30, MaxLines 200.
+- `tether doctor` updated to check `tether shell` integration instead of tmux.
+
+### Removed
+- tmux dependency for core operation (tmux still works for splitting, but is not required for capture).
+- `--debug` flag on `tether chat` replaced by the in-chat `/debug` slash command.
+
+---
+
 ## [0.7.0] — 2026-04-05
 
 ### Added

@@ -7,17 +7,17 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	tctx "tether/internal/context"
 	"tether/internal/ipc"
 )
 
 const (
-	maxHistoryMessages  = 20    // keep last N messages when building prompts
-	compactMessageCount = 20    // compact when history hits this many messages
+	maxHistoryMessages  = 20 // total messages to consider from history
+	fullExchangeCount   = 3  // last N exchanges (user+assistant pairs) to include in full
+	compactMessageCount = 20 // compact when history hits this many messages
 	compactCharCount    = 32000 // compact when history hits ~8K tokens (1 token ≈ 4 chars)
-	chatSystemPrompt   = "You are Tether, a persistent terminal assistant watching the user's tmux session.\n\n" +
+	chatSystemPrompt    = "You are Tether, a persistent terminal assistant embedded in the user's terminal session.\n\n" +
 		"Guidelines:\n" +
-		"- Be concise. The user is a sysadmin in a terminal — skip preamble.\n" +
+		"- Be concise. The user is working in a terminal — skip preamble.\n" +
 		"- Maintain context across the conversation. You remember what was said earlier.\n" +
 		"- When suggesting commands, use ```bash blocks.\n" +
 		"- You have access to the user's recent terminal output. Reference it directly.\n" +
@@ -183,15 +183,32 @@ func (c *Conversation) BuildPrompt(question string, panes []ipc.PaneContext, sum
 		sb.WriteString("\n")
 	}
 
-	// Conversation history (exclude the message we're about to add).
+	// Conversation history. Exclude the trailing user message — it was just added
+	// by sendQuestion and appears at the end as "[User's message]". Including it
+	// here too would send the current question twice.
 	history := c.Messages
+	if len(history) > 0 && history[len(history)-1].Role == "user" {
+		history = history[:len(history)-1]
+	}
 	if len(history) > maxHistoryMessages {
 		history = history[len(history)-maxHistoryMessages:]
-		sb.WriteString("[Note: earlier conversation has been truncated]\n\n")
 	}
 	if len(history) > 0 {
+		// Determine the cutoff index: messages at or after this index are "recent"
+		// and included in full. Earlier messages get user-only compression.
+		fullStart := len(history) - fullExchangeCount*2
+		if fullStart < 0 {
+			fullStart = 0
+		}
+
 		sb.WriteString("[Conversation so far]\n")
-		for _, msg := range history {
+		compressed := 0
+		for i, msg := range history {
+			if i < fullStart && msg.Role == "assistant" {
+				// Drop old assistant responses — saves tokens, context covered by summary.
+				compressed++
+				continue
+			}
 			if msg.Role == "user" {
 				sb.WriteString("User: ")
 			} else {
@@ -200,21 +217,30 @@ func (c *Conversation) BuildPrompt(question string, panes []ipc.PaneContext, sum
 			sb.WriteString(msg.Content)
 			sb.WriteString("\n\n")
 		}
+		if compressed > 0 {
+			// Let Claude know some responses were omitted.
+			sb.WriteString(fmt.Sprintf("[Note: %d earlier assistant responses omitted to save context — ask if you need details from earlier.]\n\n", compressed))
+		}
 	}
 
-	// Rolling session summary (narrative context).
+	// Rolling session summary (narrative context). Cap at 1000 chars (~250 tokens)
+	// — it's meant to be a brief narrative, not a transcript.
+	const maxSummaryChars = 1000
 	if summary != "" {
+		if len(summary) > maxSummaryChars {
+			summary = summary[:maxSummaryChars] + "…"
+		}
 		sb.WriteString("[Session summary]\n")
 		sb.WriteString(summary)
 		sb.WriteString("\n\n")
 	}
 
-	// Terminal context from watched panes.
-	// Apply relevance filtering so we only send lines pertinent to the question.
-	filtered := tctx.SelectForQuestion(question, panes, tctx.DefaultOptions())
-	filtered = tctx.TruncatePanes(filtered)
+	// Terminal context — panes should already be filtered and truncated by the caller.
+	// Hard cap: stop writing context if we've already used 20k chars (~5k tokens).
+	const maxContextChars = 20000
+	ctxChars := 0
 	hasContent := false
-	for _, p := range filtered {
+	for _, p := range panes {
 		if len(p.Lines) > 0 {
 			hasContent = true
 			break
@@ -222,18 +248,24 @@ func (c *Conversation) BuildPrompt(question string, panes []ipc.PaneContext, sum
 	}
 	if hasContent {
 		sb.WriteString("[Recent terminal activity]\n")
-		for _, p := range filtered {
+		for _, p := range panes {
 			if len(p.Lines) == 0 {
 				continue
 			}
 			fmt.Fprintf(&sb, "Pane %s (%d lines):\n```\n", p.PaneID, len(p.Lines))
 			for _, l := range p.Lines {
+				if ctxChars+len(l) > maxContextChars {
+					sb.WriteString("… context truncated (line budget exceeded) …\n")
+					goto doneContext
+				}
 				sb.WriteString(l)
 				sb.WriteByte('\n')
+				ctxChars += len(l) + 1
 			}
 			sb.WriteString("```\n")
 		}
-		sb.WriteString("\n")
+	doneContext:
+		sb.WriteString("```\n\n")
 	}
 
 	// The new message.

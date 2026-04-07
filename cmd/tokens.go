@@ -28,51 +28,47 @@ func init() {
 }
 
 func runTokens(cmd *cobra.Command, args []string) error {
-	// Fetch context from daemon.
 	var fullPanes, deltaPanes []ipc.PaneContext
 	var sessionSummary string
 
 	conn, err := ipc.Dial()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "note: daemon not running — context will be empty")
+		fmt.Fprintln(os.Stderr, "note: tether not running — context will be empty")
 	} else {
 		defer conn.Close()
 
 		// Full context.
 		if ipc.SendMsg(conn, ipc.TypeGetContext, ipc.GetContextPayload{NLines: 200}) == nil {
 			var resp ipc.ContextResp
-			if ipc.Recv(conn, &resp) == nil {
-				fullPanes = resp.Panes
+			if ipc.Recv(conn, &resp) == nil && len(resp.Lines) > 0 {
+				fullPanes = []ipc.PaneContext{{PaneID: "session", Lines: resp.Lines}}
 				sessionSummary = resp.Summary
 			}
 		}
 
-		// Delta context (new connection — don't advance the real cursor).
+		// Delta context (separate connection so we don't advance the real cursor).
 		conn2, err2 := ipc.Dial()
 		if err2 == nil {
 			defer conn2.Close()
 			if ipc.SendMsg(conn2, ipc.TypeGetContext, ipc.GetContextPayload{DeltaOnly: true}) == nil {
 				var resp ipc.ContextResp
-				if ipc.Recv(conn2, &resp) == nil {
-					deltaPanes = resp.Panes
+				if ipc.Recv(conn2, &resp) == nil && len(resp.Lines) > 0 {
+					deltaPanes = []ipc.PaneContext{{PaneID: "session", Lines: resp.Lines}}
 				}
 			}
 		}
 	}
 
-	// Load conversation history.
 	convPath, _ := conversation.DefaultPath()
 	conv, _ := conversation.Load(convPath)
 	if conv == nil {
 		conv = &conversation.Conversation{}
 	}
 
-	// Build the full prompt with a placeholder question.
 	placeholderQ := "(question)"
 	fullPrompt := conv.BuildPrompt(placeholderQ, fullPanes, sessionSummary)
 	deltaPrompt := conv.BuildPrompt(placeholderQ, deltaPanes, sessionSummary)
 
-	// Compute relevance-filtered line counts for display.
 	filteredFull := tctx.SelectForQuestion(placeholderQ, fullPanes, tctx.DefaultOptions())
 	filteredDelta := tctx.SelectForQuestion(placeholderQ, deltaPanes, tctx.DefaultOptions())
 
@@ -87,23 +83,17 @@ func runTokens(cmd *cobra.Command, args []string) error {
 		fmt.Printf("  %-28s %5d chars  ~%d tokens\n", label, chars, tokens)
 	}
 
-	// System prompt (constant).
 	printSection("System prompt", claude.SystemPrompt())
 
-	// Conversation history.
 	histChars := 0
-	if conv != nil {
-		for _, m := range conv.Messages {
-			histChars += len(m.Content)
-		}
+	for _, m := range conv.Messages {
+		histChars += len(m.Content)
 	}
 	fmt.Printf("  %-28s %5d chars  ~%d tokens  (%d messages)\n",
 		"Conversation history", histChars, histChars/4, conv.Len())
 
-	// Session summary.
 	printSection("Session summary", sessionSummary)
 
-	// Terminal context — full vs delta.
 	fullContextChars := 0
 	for _, p := range fullPanes {
 		for _, l := range p.Lines {
@@ -150,7 +140,7 @@ func runTokens(cmd *cobra.Command, args []string) error {
 	}
 
 	if conv.ShouldCompact() {
-		fmt.Printf("\n  ⚠  Conversation is large — compaction will trigger after next response.\n")
+		fmt.Printf("\n  Conversation is large — compaction will trigger after next response.\n")
 	}
 
 	fmt.Println(sep)

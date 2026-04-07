@@ -10,8 +10,14 @@ import (
 var rootCmd = &cobra.Command{
 	Use:     "tether",
 	Short:   "Terminal companion — you drive, Claude rides along",
-	Long:    `Tether keeps Claude in the loop while you work normally in your terminal.
-Start the daemon, point it at a pane, then ask questions with full context.`,
+	Long: `Tether captures your terminal output in real time and gives Claude context
+without you having to re-explain what you've been doing.
+
+Get started:
+  tether install          install shell integration (OSC 133 markers)
+  tether shell            start your shell with context capture
+  ctrl+\                  open Claude chat overlay (inside tether shell)
+  tether ask "question"   one-shot question from any terminal`,
 	Version: Version,
 }
 
@@ -23,10 +29,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.AddCommand(startCmd)
 	rootCmd.AddCommand(stopCmd)
 	rootCmd.AddCommand(statusCmd)
-	rootCmd.AddCommand(watchCmd)
 	rootCmd.AddCommand(askCmd)
-	rootCmd.AddCommand(daemonCmd)
 }
