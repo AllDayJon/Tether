@@ -489,14 +489,32 @@ code {
   font-size: 13px;
 }
 
+.claude-header {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
 .claude-label {
   font-size: 11px;
   font-weight: 600;
   color: var(--blue);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  display: block;
-  margin-bottom: 4px;
+}
+
+.chat-ts {
+  font-size: 10px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+
+.chat-token-cost {
+  font-size: 10px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  margin-top: 6px;
 }
 
 .chat-claude p {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tether — AI companion for your terminal</title>
-  <meta name="description" content="Tether watches your tmux panes in the background while you work. When you need help, Claude is already up to speed. No copy-paste. No re-explaining." />
+  <meta name="description" content="Tether rides along in your terminal session while you work. When you need help, Claude is already up to speed. No copy-paste. No re-explaining." />
 
   <!-- Open Graph -->
   <meta property="og:type"        content="website" />
@@ -15,7 +15,7 @@
   <!-- Twitter Card -->
   <meta name="twitter:card"        content="summary" />
   <meta name="twitter:title"       content="Tether — AI companion for your terminal" />
-  <meta name="twitter:description" content="You drive. Claude rides along. Tether watches your tmux panes, builds context, and is ready when you are." />
+  <meta name="twitter:description" content="You drive. Claude rides along. Tether watches your terminal session, builds context, and is ready when you are." />
 
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛓</text></svg>" />
@@ -36,7 +36,7 @@
       </a>
       <div class="nav-links">
         <a href="#how-it-works">How it works</a>
-        <a href="#smart-context">How it filters</a>
+        <a href="#smart-context">Smart context</a>
         <a href="#modes">Modes</a>
         <a href="#security">Security</a>
         <a href="#install">Install</a>
@@ -57,14 +57,14 @@
     <div class="container">
       <div class="hero-badge">
         <span class="badge-dot"></span>
-        v0.7.0 — Now available
+        v0.8.0 — Now available
       </div>
       <h1 class="hero-headline">
         You drive.<br />
         <span class="gradient-text">Claude rides along.</span>
       </h1>
       <p class="hero-sub">
-        A terminal companion that watches your tmux panes in the background,
+        A terminal companion that rides along in your shell session,
         building context as you work. When you need help, it's already up to speed.
       </p>
       <div class="hero-actions">
@@ -85,7 +85,7 @@
             <span class="dot dot-yellow"></span>
             <span class="dot dot-green"></span>
           </div>
-          <div class="terminal-title">tmux — work session</div>
+          <div class="terminal-title">tether shell — work session</div>
         </div>
         <div class="terminal-body">
           <div class="terminal-split">
@@ -104,12 +104,12 @@
               <div class="pane-header">
                 <span class="tether-name">tether</span>
                 <span class="mode-badge mode-assist">ASSIST</span>
-                <span class="watching">watching: %0</span>
+                <span class="watching">12ctx  1 msg  ~320tok</span>
               </div>
               <div class="terminal-content">
                 <div class="chat-you">why are these 502s spiking?</div>
                 <div class="chat-claude">
-                  <span class="claude-label">Claude</span>
+                  <div class="claude-header"><span class="claude-label">Claude</span><span class="chat-ts">14:22</span></div>
                   <p>Upstream timeout from nginx — <code>worker_processes</code> is likely saturated. Check:</p>
                   <div class="proposal-box">
                     <div class="proposal-header">Run this command?</div>
@@ -121,6 +121,7 @@
                       <span class="key">a</span> allow session
                     </div>
                   </div>
+                  <div class="chat-token-cost">↑ ~320 tok  ↓ ~85 tok</div>
                 </div>
                 <div class="tether-input">
                   <span class="input-prompt">&gt;</span>
@@ -145,7 +146,8 @@
         what you've been doing, and rebuild the context from scratch. Every single time.
       </p>
       <p class="section-sub">
-        Tether fixes that. It watches your terminal in the background while you work. When you ask a question,
+        Tether fixes that. Run your shell through <code>tether shell</code> and it rides along in the background,
+        capturing output as you work. When you ask a question in <code>tether chat</code>,
         Claude already knows what's been happening. No copy-paste. No re-explaining. No context loss.
       </p>
 
@@ -162,14 +164,14 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
           </div>
           <h3>Tether watches silently</h3>
-          <p>Your tmux panes are polled every 750ms. New output is buffered in memory, scored for relevance, and compressed — never written to disk.</p>
+          <p>Your shell runs through Tether's PTY proxy. Output is captured in real time, buffered in memory, and ready to be filtered when you ask — never written to disk.</p>
         </div>
         <div class="how-card">
           <div class="how-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </div>
           <h3>Ask when you're ready</h3>
-          <p>Hit your keybind. Claude already knows what's going on — it's been watching. No copy-paste, no re-explaining, no context loss.</p>
+          <p>Open <code>tether chat</code> in any terminal window and ask. Claude already knows what's going on — no copy-paste, no re-explaining, no context loss.</p>
         </div>
       </div>
     </div>
@@ -179,59 +181,50 @@
   <section class="section section-alt" id="smart-context">
     <div class="container">
       <div class="section-label">Smart context</div>
-      <h2 class="section-title">Everything captured. Only what matters sent.</h2>
+      <h2 class="section-title">Claude arrives informed, not overwhelmed.</h2>
       <p class="section-sub">
-        Tether keeps a full buffer of your terminal output locally. When you ask a question, it scores every
-        line for relevance and only sends the parts that actually matter — so Claude has real awareness
-        without you burning through your token budget on irrelevant output.
+        Tether doesn't just dump your terminal history into every message. It watches as you work,
+        then figures out what's actually relevant to your question — so Claude has the right picture
+        without you spending a fortune on tokens or doing any curation yourself.
       </p>
 
       <div class="context-pipeline">
         <div class="pipeline-step">
           <div class="pipeline-num">1</div>
           <div class="pipeline-body">
-            <div class="pipeline-title">Capture everything</div>
-            <div class="pipeline-desc">All output from your watched panes is buffered in memory — up to 200 lines per pane. Nothing is written to disk, nothing is sent anywhere yet.</div>
-            <div class="pipeline-stat">200 lines captured</div>
+            <div class="pipeline-title">It watches while you work</div>
+            <div class="pipeline-desc">Everything in your session is captured in the background — commands, output, errors. You don't manage it. Nothing is sent anywhere until you ask.</div>
+            <div class="pipeline-stat">Automatic · no setup per question</div>
           </div>
         </div>
         <div class="pipeline-arrow">↓</div>
         <div class="pipeline-step">
           <div class="pipeline-num">2</div>
           <div class="pipeline-body">
-            <div class="pipeline-title">Score for relevance</div>
-            <div class="pipeline-desc">When you ask a question, each line is scored by keyword overlap with your question. Lines about nginx score high for an nginx question. Lines about a file listing don't.</div>
-            <div class="pipeline-stat">Top 25 lines selected</div>
-          </div>
-        </div>
-        <div class="pipeline-arrow">↓</div>
-        <div class="pipeline-step">
-          <div class="pipeline-num">3</div>
-          <div class="pipeline-body">
-            <div class="pipeline-title">Delta only</div>
-            <div class="pipeline-desc">Tether tracks what Claude has already seen. Follow-up messages only include new output since your last question — not the full buffer again.</div>
-            <div class="pipeline-stat">Only new lines on follow-ups</div>
+            <div class="pipeline-title">It finds what matters to your question</div>
+            <div class="pipeline-desc">When you ask something, Tether scans your recent activity and picks out the lines most relevant to what you asked. Error messages and failures always surface — even if your question doesn't use the exact same words.</div>
+            <div class="pipeline-stat">Relevant lines selected · errors always bubble up</div>
           </div>
         </div>
         <div class="pipeline-arrow">↓</div>
         <div class="pipeline-step pipeline-step-result">
           <div class="pipeline-num pipeline-num-result">✓</div>
           <div class="pipeline-body">
-            <div class="pipeline-title">Focused prompt sent to Claude</div>
-            <div class="pipeline-desc">Claude gets a rolling session summary, your conversation history, and the filtered terminal context — typically under 700 tokens total.</div>
+            <div class="pipeline-title">Claude gets the right picture</div>
+            <div class="pipeline-desc">Not a raw dump — a curated snapshot. The relevant terminal output, your conversation history, and a rolling summary of your session. Claude knows what you've been doing without you having to explain it.</div>
             <div class="pipeline-stat-row">
               <div class="pipeline-stat-item">
-                <div class="stat-val">~2,700</div>
-                <div class="stat-label">tokens raw</div>
+                <div class="stat-val">everything</div>
+                <div class="stat-label">captured</div>
               </div>
               <div class="stat-arrow">→</div>
               <div class="pipeline-stat-item stat-item-good">
-                <div class="stat-val">~20</div>
-                <div class="stat-label">tokens sent</div>
+                <div class="stat-val">what matters</div>
+                <div class="stat-label">sent</div>
               </div>
               <div class="pipeline-stat-item stat-item-savings">
-                <div class="stat-val">−95%</div>
-                <div class="stat-label">typical reduction</div>
+                <div class="stat-val">less</div>
+                <div class="stat-label">spent on tokens</div>
               </div>
             </div>
           </div>
@@ -240,7 +233,7 @@
 
       <div class="context-debug-note">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Run <code>tether tokens</code> to see your current buffer size, or <code>tether chat --debug</code> to log exactly what gets sent to Claude on every message.
+        Curious what's being sent? Type <code>/debug</code> inside chat to see exactly what Tether included in each message and why.
       </div>
     </div>
   </section>
@@ -337,21 +330,21 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </div>
           <h4>Relevance filtering</h4>
-          <p>Context is scored against your question. Irrelevant lines are dropped. Reduces per-pane context from ~200 lines to ~25 focused lines.</p>
+          <p>Context is scored against your question. Irrelevant lines are dropped. The 5,000-line buffer is trimmed to up to 200 focused lines before anything is sent.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon icon-purple">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
           <h4>SSH-transparent</h4>
-          <p>Commands are injected via <code>tmux send-keys</code>. No Tether install needed on remote hosts — works anywhere you can SSH.</p>
+          <p>Tether captures everything in your local PTY — including SSH session output. No install needed on remote hosts. Works anywhere you can SSH.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon icon-orange">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           </div>
-          <h4>Kill switch</h4>
-          <p><code>Ctrl+K</code> sends <code>Ctrl+C</code> to the work pane instantly. Stop anything, anytime, without leaving the chat window.</p>
+          <h4>Abort anytime</h4>
+          <p><code>Ctrl+K</code> stops a streaming response mid-flight. Change your mind, rephrase, and ask again — no need to wait for Claude to finish.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon icon-blue">
@@ -372,7 +365,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           </div>
           <h4>Token visibility</h4>
-          <p>Run <code>tether tokens</code> to see context buffer size. Use <code>--debug</code> to log exactly what gets sent to Claude on each message.</p>
+          <p>Each response shows estimated prompt and response token cost. Type <code>/debug</code> in chat for a full breakdown — keywords extracted, lines fetched vs. filtered, and per-component token estimates.</p>
         </div>
       </div>
     </div>
@@ -473,7 +466,7 @@
       <h2 class="section-title">Up in four commands</h2>
       <p class="section-sub">
         Tether is built for developers and engineers who live in the terminal.
-        You'll need <strong>tmux</strong> for session capture, <strong>Go 1.22+</strong> to build from source,
+        You'll need <strong>Go 1.22+</strong> to build from source
         and a <strong>Claude Code CLI</strong> subscription (<code>claude</code> on PATH and logged in) — Tether uses it for all AI calls, so there's no separate API key or billing.
       </p>
 
@@ -497,14 +490,14 @@ go install .</code></pre>
         <div class="install-step">
           <div class="step-num">2</div>
           <div class="step-content">
-            <div class="step-title">Start a tmux session and the daemon</div>
+            <div class="step-title">Install shell integration</div>
             <div class="code-block">
               <div class="code-block-header">
                 <span>shell</span>
-                <button class="copy-btn" data-target="install-start">Copy</button>
+                <button class="copy-btn" data-target="install-shell">Copy</button>
               </div>
-              <pre><code id="install-start">tmux new -s work
-tether start</code></pre>
+              <pre><code id="install-shell">tether install
+# then restart your shell (or source your shell config)</code></pre>
             </div>
           </div>
         </div>
@@ -512,14 +505,15 @@ tether start</code></pre>
         <div class="install-step">
           <div class="step-num">3</div>
           <div class="step-content">
-            <div class="step-title">Watch a pane and open chat</div>
+            <div class="step-title">Start a tether shell session</div>
             <div class="code-block">
               <div class="code-block-header">
                 <span>shell</span>
-                <button class="copy-btn" data-target="install-chat">Copy</button>
+                <button class="copy-btn" data-target="install-start">Copy</button>
               </div>
-              <pre><code id="install-chat">tether watch       # watch current pane
-tether chat        # open chat split (40% right)</code></pre>
+              <pre><code id="install-start">tether shell
+# this starts your shell through tether's PTY proxy
+# work normally — tether watches in the background</code></pre>
             </div>
           </div>
         </div>
@@ -527,14 +521,14 @@ tether chat        # open chat split (40% right)</code></pre>
         <div class="install-step">
           <div class="step-num">4</div>
           <div class="step-content">
-            <div class="step-title">Install a keybind (optional but recommended)</div>
+            <div class="step-title">Open chat in another terminal</div>
             <div class="code-block">
               <div class="code-block-header">
                 <span>shell</span>
-                <button class="copy-btn" data-target="install-keybind">Copy</button>
+                <button class="copy-btn" data-target="install-chat">Copy</button>
               </div>
-              <pre><code id="install-keybind">tether keybind install --persist
-# prefix+g now opens the chat from anywhere</code></pre>
+              <pre><code id="install-chat">tether chat
+# opens the chat TUI — ask anything, Claude already has context</code></pre>
             </div>
           </div>
         </div>
@@ -549,13 +543,13 @@ tether chat        # open chat split (40% right)</code></pre>
           </div>
           <div class="dep-sep">·</div>
           <div class="dep-item">
-            <div class="dep-name">tmux</div>
-            <div class="dep-desc">Session capture &amp; command injection</div>
+            <div class="dep-name">Claude Code CLI</div>
+            <div class="dep-desc"><code>claude</code> must be on PATH and logged in</div>
           </div>
           <div class="dep-sep">·</div>
           <div class="dep-item">
-            <div class="dep-name">Claude Code CLI</div>
-            <div class="dep-desc"><code>claude</code> must be on PATH and logged in</div>
+            <div class="dep-name">bash / zsh / fish</div>
+            <div class="dep-desc">Shell integration supports all three</div>
           </div>
         </div>
       </div>
@@ -570,26 +564,25 @@ tether chat        # open chat split (40% right)</code></pre>
 
       <div class="cmd-grid">
         <div class="cmd-group">
-          <div class="cmd-group-label">Daemon</div>
+          <div class="cmd-group-label">Setup</div>
           <div class="cmd-list">
-            <div class="cmd-item"><code>tether start</code><span>Start the background daemon</span></div>
-            <div class="cmd-item"><code>tether stop</code><span>Stop the daemon</span></div>
-            <div class="cmd-item"><code>tether status</code><span>Daemon status, watched panes, mode</span></div>
+            <div class="cmd-item"><code>tether install</code><span>Install shell integration (bash/zsh/fish)</span></div>
+            <div class="cmd-item"><code>tether uninstall</code><span>Remove shell integration and config</span></div>
             <div class="cmd-item"><code>tether doctor</code><span>Check all dependencies</span></div>
           </div>
         </div>
         <div class="cmd-group">
-          <div class="cmd-group-label">Watching</div>
+          <div class="cmd-group-label">Session</div>
           <div class="cmd-list">
-            <div class="cmd-item"><code>tether watch [pane]</code><span>Watch a pane</span></div>
-            <div class="cmd-item"><code>tether unwatch &lt;pane&gt;</code><span>Stop watching a pane</span></div>
-            <div class="cmd-item"><code>tether tail</code><span>Stream pane output live</span></div>
+            <div class="cmd-item"><code>tether shell</code><span>Start your shell through the PTY proxy</span></div>
+            <div class="cmd-item"><code>tether status</code><span>Active sessions, mode, daemon state</span></div>
+            <div class="cmd-item"><code>tether tail</code><span>Stream session output live</span></div>
           </div>
         </div>
         <div class="cmd-group">
           <div class="cmd-group-label">Chat</div>
           <div class="cmd-list">
-            <div class="cmd-item"><code>tether chat</code><span>Open chat as a tmux split</span></div>
+            <div class="cmd-item"><code>tether chat</code><span>Open the chat TUI in any terminal</span></div>
             <div class="cmd-item"><code>tether ask &lt;question&gt;</code><span>One-shot question to stdout</span></div>
             <div class="cmd-item"><code>tether mode [watch|assist|act]</code><span>Show or change mode</span></div>
           </div>
@@ -609,12 +602,17 @@ tether chat        # open chat split (40% right)</code></pre>
         <div class="keybinds-grid">
           <div class="kb-item"><kbd>Enter</kbd><span>Send message</span></div>
           <div class="kb-item"><kbd>PgUp</kbd> <kbd>PgDn</kbd><span>Scroll history</span></div>
-          <div class="kb-item"><kbd>Ctrl+K</kbd><span>Kill switch — send Ctrl+C to work pane</span></div>
+          <div class="kb-item"><kbd>Ctrl+K</kbd><span>Abort streaming response</span></div>
           <div class="kb-item"><kbd>Ctrl+L</kbd><span>Clear conversation</span></div>
           <div class="kb-item"><kbd>Ctrl+C</kbd><span>Close chat</span></div>
           <div class="kb-item"><kbd>e</kbd><span>Edit a proposed command before running</span></div>
           <div class="kb-item"><kbd>a</kbd><span>Allow command for the rest of the session</span></div>
           <div class="kb-item"><kbd>x</kbd> <kbd>Esc</kbd><span>Reject a proposed command</span></div>
+        </div>
+        <div class="keybinds-label" style="margin-top:1.5rem">Chat slash commands</div>
+        <div class="keybinds-grid">
+          <div class="kb-item"><kbd>/debug</kbd><span>Toggle debug block — keywords, line counts, token breakdown</span></div>
+          <div class="kb-item"><kbd>/clear</kbd><span>Clear conversation history</span></div>
         </div>
       </div>
     </div>
@@ -640,11 +638,21 @@ tether chat        # open chat split (40% right)</code></pre>
 
         <div class="faq-item">
           <button class="faq-q" aria-expanded="false">
+            Does this cost anything? What do I need?
+            <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-a">
+            <p>Tether itself is free and open source. The only requirement beyond Go 1.22+ is the <strong>Claude Code CLI</strong> — you'll need a Claude subscription with <code>claude</code> installed and logged in on your machine. Tether uses it for all AI calls, so there's no separate API key, no extra billing, and no Tether account.</p>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-q" aria-expanded="false">
             What exactly gets sent to Claude?
             <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="faq-a">
-            <p>Each message assembles: a system prompt, your recent conversation history, a short rolling summary of your session, and a <strong>filtered subset</strong> of new terminal output since your last message — not the full buffer. Lines are scored for relevance to your question; irrelevant ones are dropped. Run <code>tether chat --debug</code> to log exactly what was sent on each turn.</p>
+            <p>A focused snapshot of your recent terminal activity, filtered for relevance to your question, plus your conversation history and a brief summary of your session. Tether is careful about what it includes — irrelevant output is dropped so you're not burning tokens on noise. Type <code>/debug</code> in chat to see exactly what went into any message.</p>
           </div>
         </div>
 
@@ -664,17 +672,17 @@ tether chat        # open chat split (40% right)</code></pre>
             <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="faq-a">
-            <p>No. Commands are injected via <code>tmux send-keys</code> on your local machine. As long as you're running tmux locally and have SSHed into the remote host within a pane, Tether can watch that pane and send commands to it without any remote install.</p>
+            <p>No. <code>tether shell</code> runs on your local machine and captures everything you see — including output from SSH sessions running inside it. Tether never needs to be on the remote host.</p>
           </div>
         </div>
 
         <div class="faq-item">
           <button class="faq-q" aria-expanded="false">
-            Does Tether work without tmux?
+            What terminal do I need?
             <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="faq-a">
-            <p>Not currently — tmux is required for pane capture and command injection via <code>send-keys</code>. A PTY proxy mode that removes the tmux dependency is planned for a future release.</p>
+            <p>Whatever you already use. Run <code>tether shell</code> to start your session and <code>tether chat</code> in a second terminal window or pane. If you use tmux, iTerm2, Kitty, Alacritty — it all works the same way.</p>
           </div>
         </div>
       </div>
@@ -692,7 +700,7 @@ tether chat        # open chat split (40% right)</code></pre>
           </a>
           <div class="footer-tagline">A terminal companion that keeps Claude in the loop while you work.</div>
           <div class="footer-badges">
-            <span class="badge">v0.7.0</span>
+            <span class="badge">v0.8.0</span>
             <span class="badge">Go 1.22+</span>
             <span class="badge">MIT License</span>
           </div>
