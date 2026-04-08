@@ -20,6 +20,7 @@ import (
 	"tether/internal/config"
 	tctx "tether/internal/context"
 	"tether/internal/conversation"
+	"tether/internal/handoff"
 	"tether/internal/ipc"
 )
 
@@ -90,6 +91,18 @@ var (
 				BorderForeground(lipgloss.Color("#ffd700")).
 				Padding(0, 1)
 
+	handoffBorderStyle = lipgloss.NewStyle().
+				BorderStyle(lipgloss.RoundedBorder()).
+				BorderForeground(lipgloss.Color("#00d4ff")).
+				Padding(0, 1)
+
+	handoffLabelStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#00d4ff")).
+				Bold(true)
+
+	handoffDimStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#555555"))
+
 	proposalCmdStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color(white)).
 				Bold(true)
@@ -131,6 +144,22 @@ type sessionAllowedMsg struct {
 	err     error
 }
 type clipboardMsg struct{ err error }
+
+type handoffBuiltMsg struct {
+	pkg handoff.Package
+	err error
+}
+type handoffLaunchedMsg struct{ err error }
+
+// handoffPhase tracks where we are in the handoff flow.
+type handoffPhase int
+
+const (
+	handoffNone      handoffPhase = iota
+	handoffBuilding               // fetching context + git state in background
+	handoffReviewing              // showing preflight to user
+	handoffActive                 // agent launched — directing user to terminal
+)
 
 // ── Model ─────────────────────────────────────────────────────────────────────
 
@@ -186,6 +215,11 @@ type Model struct {
 	sentLineSet  map[string]struct{} // lines sent in the last context — deprioritized next turn
 	msgCount     int
 	autoExec     bool // auto-run allow-listed commands without proposal (toggled with [t])
+
+	// Handoff state.
+	handoffPhase handoffPhase
+	handoffPkg   *handoff.Package
+	handoffGoal  string // goal text while building or reviewing
 }
 
 func New(conv *conversation.Conversation, debugLog string) Model {
@@ -267,7 +301,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, vpCmd)
 
 	case spinner.TickMsg:
-		if m.streaming {
+		if m.streaming || m.handoffPhase == handoffBuilding {
 			var spinCmd tea.Cmd
 			m.spin, spinCmd = m.spin.Update(msg)
 			cmds = append(cmds, spinCmd)
@@ -281,6 +315,36 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.KeyMsg:
+		// ── Handoff active — agent is running in terminal ─────────────────
+		if m.handoffPhase == handoffActive {
+			// Any key dismisses the banner and returns to normal chat.
+			if msg.String() == "ctrl+c" {
+				return m, tea.Quit
+			}
+			m.handoffPhase = handoffNone
+			return m, tea.Batch(cmds...)
+		}
+
+		// ── Handoff review mode ───────────────────────────────────────────
+		if m.handoffPhase == handoffReviewing {
+			switch msg.String() {
+			case "enter":
+				return m, m.launchHandoff()
+			case "e", "E":
+				// Put goal back in input for editing.
+				m.input.SetValue("/handoff " + m.handoffGoal)
+				m.input.Focus()
+				m.handoffPhase = handoffNone
+				m.handoffPkg = nil
+			case "x", "X", "esc":
+				m.handoffPhase = handoffNone
+				m.handoffPkg = nil
+			case "ctrl+c":
+				return m, tea.Quit
+			}
+			return m, tea.Batch(cmds...)
+		}
+
 		// ── Proposal mode ─────────────────────────────────────────────────
 		if len(m.proposals) > 0 {
 			if m.proposalEdit {
@@ -448,6 +512,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.renderContent()
 				break
 			}
+			if strings.HasPrefix(question, "/handoff") {
+				goal := strings.TrimSpace(strings.TrimPrefix(question, "/handoff"))
+				if goal == "" {
+					m.err = "usage: /handoff <task description>"
+					m.input.Reset()
+					break
+				}
+				m.handoffGoal = goal
+				m.handoffPhase = handoffBuilding
+				m.input.Reset()
+				m.historyIdx = -1
+				m.err = ""
+				cmds = append(cmds, m.buildHandoff(goal))
+				return m, tea.Batch(cmds...)
+			}
 			return m.sendQuestion(question, cmds)
 
 		case tea.KeyUp:
@@ -582,6 +661,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.renderedMsgs = nil
 		m.msgTimestamps = nil
 		m.msgPromptTokens = nil
+
+	case handoffBuiltMsg:
+		if msg.err != nil {
+			m.handoffPhase = handoffNone
+			m.err = "handoff build failed: " + msg.err.Error()
+		} else {
+			pkg := msg.pkg
+			m.handoffPkg = &pkg
+			m.handoffPhase = handoffReviewing
+		}
+
+	case handoffLaunchedMsg:
+		m.handoffPkg = nil
+		if msg.err != nil {
+			m.handoffPhase = handoffNone
+			m.err = "handoff launch failed: " + msg.err.Error()
+		} else {
+			m.handoffPhase = handoffActive
+			m.err = ""
+		}
 	}
 
 	return m, tea.Batch(cmds...)
@@ -620,6 +719,12 @@ func (m Model) View() string {
 	parts := []string{
 		m.headerView(),
 		m.viewport.View(),
+	}
+	if m.handoffPhase == handoffReviewing && m.handoffPkg != nil {
+		parts = append(parts, m.handoffReviewView())
+	}
+	if m.handoffPhase == handoffActive {
+		parts = append(parts, m.handoffActiveView())
 	}
 	if len(m.proposals) > 0 {
 		parts = append(parts, m.proposalView())
@@ -669,6 +774,83 @@ func (m Model) headerView() string {
 	return headerStyle.Width(m.width).Render(line)
 }
 
+func (m Model) handoffActiveView() string {
+	var sb strings.Builder
+	sb.WriteString(handoffLabelStyle.Render("Claude Code is running in your terminal") + "\n\n")
+	sb.WriteString(proposalCmdStyle.Render("→ Switch to your tether shell terminal now.\n\n"))
+	sb.WriteString(handoffDimStyle.Render("  If you see a folder trust prompt, press Enter or y to accept it.\n"))
+	sb.WriteString(handoffDimStyle.Render("  Tether continues capturing the session in the background.\n\n"))
+	sb.WriteString(dimStyle.Render("Press any key to dismiss this message."))
+	return handoffBorderStyle.Width(m.width - 2).Render(sb.String())
+}
+
+func (m Model) handoffReviewView() string {
+	pkg := m.handoffPkg
+
+	var sb strings.Builder
+	sb.WriteString(handoffLabelStyle.Render("Handoff to Claude Code") + "\n\n")
+
+	// Goal.
+	sb.WriteString(proposalCmdStyle.Render("Goal: ") + pkg.Goal + "\n\n")
+
+	// Session context.
+	if pkg.CWD != "" {
+		sb.WriteString(handoffDimStyle.Render(fmt.Sprintf("  dir:    %s\n", pkg.CWD)))
+	}
+	if pkg.Branch != "" {
+		label := pkg.Branch
+		if pkg.Dirty != "" {
+			n := len(strings.Split(strings.TrimSpace(pkg.Dirty), "\n"))
+			label = fmt.Sprintf("%s  (%d uncommitted file(s))", pkg.Branch, n)
+		}
+		sb.WriteString(handoffDimStyle.Render(fmt.Sprintf("  branch: %s\n", label)))
+	}
+
+	// Failures — show the actual lines so the user knows what was detected.
+	if len(pkg.Failures) > 0 {
+		sb.WriteString("\n")
+		sb.WriteString(proposalCmdStyle.Render("Failures detected:\n"))
+		for _, f := range pkg.Failures {
+			line := f.Line
+			if len(line) > m.width-16 {
+				line = line[:m.width-16] + "…"
+			}
+			if f.Count > 1 {
+				sb.WriteString(handoffDimStyle.Render(fmt.Sprintf("  • %s  (×%d)\n", line, f.Count)))
+			} else {
+				sb.WriteString(handoffDimStyle.Render(fmt.Sprintf("  • %s\n", line)))
+			}
+		}
+	} else {
+		sb.WriteString("\n")
+		sb.WriteString(handoffDimStyle.Render("  No repeated failures detected in session buffer.\n"))
+	}
+
+	// Context summary.
+	sb.WriteString("\n")
+	sb.WriteString(proposalCmdStyle.Render("Context being sent:\n"))
+	sb.WriteString(handoffDimStyle.Render(fmt.Sprintf(
+		"  %d evidence lines from session buffer\n",
+		len(pkg.Evidence),
+	)))
+	if pkg.Summary != "" {
+		sb.WriteString(handoffDimStyle.Render(fmt.Sprintf(
+			"  %d char session summary\n", len(pkg.Summary),
+		)))
+	}
+
+	// Trust-folder note — Claude Code prompts on first use per directory.
+	sb.WriteString("\n")
+	sb.WriteString(dimStyle.Render("  Note: Claude Code may ask you to trust the folder on first launch.\n"))
+	sb.WriteString(dimStyle.Render("  Switch to your terminal session to respond.\n"))
+
+	// Actions.
+	sb.WriteString("\n")
+	sb.WriteString(dimStyle.Render("[Enter] launch agent   [e] edit goal   [x] cancel"))
+
+	return handoffBorderStyle.Width(m.width - 2).Render(sb.String())
+}
+
 func (m Model) proposalView() string {
 	cmd := m.proposals[0]
 	count := ""
@@ -711,6 +893,10 @@ func (m Model) inputView() string {
 	var status string
 	if m.streaming {
 		status = dimStyle.Render(" " + m.spin.View() + " thinking...  ctrl+c to cancel")
+	} else if m.handoffPhase == handoffBuilding {
+		status = dimStyle.Render(" " + m.spin.View() + " preparing handoff...")
+	} else if m.handoffPhase == handoffReviewing {
+		status = dimStyle.Render(" review handoff above ↑")
 	} else if len(m.proposals) > 0 {
 		status = dimStyle.Render(" waiting for approval above ↑")
 	} else if m.err != "" {
@@ -1041,6 +1227,46 @@ func listenToStream(ch <-chan string) tea.Cmd {
 func copyToClipboard(text string) tea.Cmd {
 	return func() tea.Msg {
 		return clipboardMsg{err: clipboard.WriteAll(text)}
+	}
+}
+
+// ── Handoff helpers ───────────────────────────────────────────────────────────
+
+// buildHandoff fetches session context and constructs the HandoffPackage.
+// Runs as a tea.Cmd so it doesn't block the UI.
+func (m Model) buildHandoff(goal string) tea.Cmd {
+	return func() tea.Msg {
+		panes, summary, _ := fetchDeltaContext()
+		pkg := handoff.Build(goal, panes, summary)
+		return handoffBuiltMsg{pkg: pkg}
+	}
+}
+
+// launchHandoff writes the handoff prompt, injects `claude` into the PTY, and
+// transitions the UI back to normal mode.
+func (m Model) launchHandoff() tea.Cmd {
+	pkg := m.handoffPkg
+	return func() tea.Msg {
+		if pkg == nil {
+			return handoffLaunchedMsg{err: fmt.Errorf("no handoff package")}
+		}
+		cmd, err := pkg.LaunchCmd()
+		if err != nil {
+			return handoffLaunchedMsg{err: err}
+		}
+		conn, err := ipc.Dial()
+		if err != nil {
+			return handoffLaunchedMsg{err: fmt.Errorf("daemon not reachable: %w", err)}
+		}
+		defer conn.Close()
+		if err := ipc.SendMsg(conn, ipc.TypeExec, ipc.ExecPayload{Command: cmd}); err != nil {
+			return handoffLaunchedMsg{err: err}
+		}
+		var resp ipc.OKResp
+		if err := ipc.Recv(conn, &resp); err != nil {
+			return handoffLaunchedMsg{err: err}
+		}
+		return handoffLaunchedMsg{}
 	}
 }
 
