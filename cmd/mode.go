@@ -8,15 +8,14 @@ import (
 )
 
 var modeCmd = &cobra.Command{
-	Use:   "mode [watch|assist|act]",
-	Short: "Show or set the current mode (watch/assist/act)",
+	Use:   "mode [watch|assist]",
+	Short: "Show or set the current mode (watch/assist)",
 	Long: `Show or change the mode that controls how tether handles commands Claude suggests.
 
   watch   Claude observes and advises only. No commands are ever executed. (default)
   assist  Claude proposes commands. You see each one and press Enter to run, e to edit,
-          or x to reject. Nothing executes without your explicit approval.
-  act     Claude auto-executes commands on your allow list. Anything not on the allow
-          list still requires your approval. Deny/protect rules always apply.
+          or x to reject. Press [t] in the TUI to enable auto-run, which automatically
+          executes commands on your allow list without prompting.
 
 The mode is stored in the daemon and resets to 'watch' when the daemon restarts
 unless you set a default in ~/.tether/config.json.
@@ -67,18 +66,17 @@ func showMode() error {
 		fmt.Println("  Claude observes and advises. No commands execute through tether.")
 	case ipc.ModeAssist:
 		fmt.Println("  Claude proposes commands. You approve each one before it runs.")
-	case ipc.ModeAct:
-		fmt.Println("  Claude auto-executes allow-listed commands. Everything else needs approval.")
+		fmt.Println("  Press [t] in the chat TUI to enable auto-run for allow-listed commands.")
 	}
 	return nil
 }
 
 func setMode(mode ipc.Mode) error {
 	switch mode {
-	case ipc.ModeWatch, ipc.ModeAssist, ipc.ModeAct:
+	case ipc.ModeWatch, ipc.ModeAssist:
 		// valid
 	default:
-		return fmt.Errorf("unknown mode %q — use watch, assist, or act", mode)
+		return fmt.Errorf("unknown mode %q — use watch or assist", mode)
 	}
 
 	conn, err := ipc.Dial()

@@ -57,11 +57,11 @@ var (
 			Bold(true).
 			Padding(0, 1)
 
-	modeActStyle = lipgloss.NewStyle().
-			Background(lipgloss.Color("#4a0000")).
-			Foreground(lipgloss.Color("#ff6060")).
-			Bold(true).
-			Padding(0, 1)
+	autoExecBadgeStyle = lipgloss.NewStyle().
+				Background(lipgloss.Color("#1a4a1a")).
+				Foreground(lipgloss.Color("#50fa7b")).
+				Bold(true).
+				Padding(0, 1)
 
 	userLabelStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color(cyan)).
@@ -88,11 +88,6 @@ var (
 	proposalBorderStyle = lipgloss.NewStyle().
 				BorderStyle(lipgloss.RoundedBorder()).
 				BorderForeground(lipgloss.Color("#ffd700")).
-				Padding(0, 1)
-
-	proposalActBorderStyle = lipgloss.NewStyle().
-				BorderStyle(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("#ff6060")).
 				Padding(0, 1)
 
 	proposalCmdStyle = lipgloss.NewStyle().
@@ -190,6 +185,7 @@ type Model struct {
 	debugBlock   string
 	sentLineSet  map[string]struct{} // lines sent in the last context — deprioritized next turn
 	msgCount     int
+	autoExec     bool // auto-run allow-listed commands without proposal (toggled with [t])
 }
 
 func New(conv *conversation.Conversation, debugLog string) Model {
@@ -337,6 +333,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 						cmds = append(cmds, allowForSession(baseCmd), execCommand(cmd))
 					}
+				case "t", "T":
+					m.autoExec = !m.autoExec
 				case "x", "X", "esc":
 					m.proposals = m.proposals[1:]
 				case "ctrl+c":
@@ -553,7 +551,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.currentMode != ipc.ModeWatch && len(blocks) > 0 {
 			for _, block := range blocks {
-				decision := cmdguard.Decide(block, string(m.currentMode), m.cfg.Allow, m.cfg.Protect, m.cfg.Deny)
+				decision := cmdguard.Decide(block, string(m.currentMode), m.autoExec, m.cfg.Allow, m.cfg.Protect, m.cfg.Deny)
 				switch decision {
 				case cmdguard.DecisionExecute:
 					cmds = append(cmds, execCommand(block))
@@ -637,8 +635,9 @@ func (m Model) headerView() string {
 	switch m.currentMode {
 	case ipc.ModeAssist:
 		modeBadge = modeAssistStyle.Render("ASSIST")
-	case ipc.ModeAct:
-		modeBadge = modeActStyle.Render("ACT")
+		if m.autoExec {
+			modeBadge += " " + autoExecBadgeStyle.Render("AUTO")
+		}
 	default:
 		modeBadge = modeWatchStyle.Render("WATCH")
 	}
@@ -678,10 +677,6 @@ func (m Model) proposalView() string {
 	}
 
 	var title, body, hint string
-	bStyle := proposalBorderStyle
-	if m.currentMode == ipc.ModeAct {
-		bStyle = proposalActBorderStyle
-	}
 
 	if m.proposalEdit {
 		title = "Edit command" + count
@@ -696,21 +691,20 @@ func (m Model) proposalView() string {
 			baseCmd = fields[0]
 		}
 		line1 := "[Enter] run  [e] edit  [x] reject"
-		var line2 string
-		if baseCmd != "" && m.currentMode == ipc.ModeAct && class != cmdguard.ClassAllowed {
+		var line2, line3 string
+		if baseCmd != "" {
 			line2 = fmt.Sprintf("[a] allow '%s' this session  (%s)", baseCmd, cmdguard.ClassLabel(class))
-		} else if baseCmd != "" {
-			line2 = fmt.Sprintf("[a] allow '%s' this session", baseCmd)
 		}
-		if line2 != "" {
-			hint = dimStyle.Render(line1 + "\n" + line2)
+		if m.autoExec {
+			line3 = "[t] disable auto-run  (auto-run is ON — allowed commands run without prompting)"
 		} else {
-			hint = dimStyle.Render(line1)
+			line3 = "[t] enable auto-run   (allowed commands will run without prompting)"
 		}
+		hint = dimStyle.Render(line1 + "\n" + line2 + "\n" + line3)
 	}
 
 	inner := title + "\n\n" + body + "\n\n" + hint
-	return bStyle.Width(m.width - 2).Render(inner)
+	return proposalBorderStyle.Width(m.width - 2).Render(inner)
 }
 
 func (m Model) inputView() string {
