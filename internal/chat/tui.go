@@ -111,6 +111,10 @@ var (
 			Foreground(lipgloss.Color("#ff6060")).
 			Bold(true)
 
+	newContentBadgeStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("#ffd700")).
+				Bold(true)
+
 	debugHeaderStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color(dimCyan)).
 				Bold(true)
@@ -127,6 +131,11 @@ var (
 type chunkMsg string
 type doneMsg struct{ err error }
 type compactDoneMsg struct{}
+type clearErrMsg struct{ nonce int }
+type modeSetMsg struct {
+	mode ipc.Mode
+	err  error
+}
 type streamStartedMsg struct {
 	mode         ipc.Mode
 	ctxLineCount int
@@ -215,6 +224,8 @@ type Model struct {
 	sentLineSet  map[string]struct{} // lines sent in the last context — deprioritized next turn
 	msgCount     int
 	autoExec     bool // auto-run allow-listed commands without proposal (toggled with [t])
+	errNonce     int  // incremented each time a transient notice is set; clearErrMsg checks it
+	hasNewContent bool // true when streaming content arrives while user is scrolled up
 
 	// Handoff state.
 	handoffPhase handoffPhase
@@ -311,7 +322,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			m.err = "clipboard: " + msg.err.Error()
 		} else {
+			m.errNonce++
 			m.err = "copied to clipboard"
+			cmds = append(cmds, clearErrAfter(m.errNonce))
 		}
 
 	case tea.KeyMsg:
@@ -503,14 +516,35 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.debugMode = !m.debugMode
 				m.input.Reset()
 				m.historyIdx = -1
+				m.errNonce++
 				if m.debugMode {
 					m.err = "debug mode ON — context details shown before each response"
 				} else {
 					m.err = "debug mode OFF"
 					m.debugBlock = ""
 				}
+				cmds = append(cmds, clearErrAfter(m.errNonce))
 				m.renderContent()
 				break
+			}
+			if strings.HasPrefix(question, "/mode") {
+				arg := strings.TrimSpace(strings.TrimPrefix(question, "/mode"))
+				m.input.Reset()
+				m.historyIdx = -1
+				if arg == "" {
+					m.errNonce++
+					m.err = "current mode: " + string(m.currentMode)
+					cmds = append(cmds, clearErrAfter(m.errNonce))
+					m.renderContent()
+					break
+				}
+				mode := ipc.Mode(arg)
+				if mode != ipc.ModeWatch && mode != ipc.ModeAssist {
+					m.err = fmt.Sprintf("unknown mode %q — use watch or assist", arg)
+					break
+				}
+				cmds = append(cmds, setModeCmd(mode))
+				return m, tea.Batch(cmds...)
 			}
 			if strings.HasPrefix(question, "/handoff") {
 				goal := strings.TrimSpace(strings.TrimPrefix(question, "/handoff"))
@@ -604,7 +638,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.streamBuf += string(msg)
 		m.renderContent()
-		m.viewport.GotoBottom()
+		if m.viewport.ScrollPercent() >= 0.999 {
+			m.viewport.GotoBottom()
+		} else {
+			m.hasNewContent = true
+		}
 		cmds = append(cmds, listenToStream(m.chunkCh))
 
 	case doneMsg:
@@ -681,6 +719,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.handoffPhase = handoffActive
 			m.err = ""
 		}
+
+	case clearErrMsg:
+		if msg.nonce == m.errNonce {
+			m.err = ""
+		}
+
+	case modeSetMsg:
+		if msg.err != nil {
+			m.err = "mode: " + msg.err.Error()
+		} else {
+			m.currentMode = msg.mode
+			m.errNonce++
+			m.err = "mode: " + string(msg.mode)
+			cmds = append(cmds, clearErrAfter(m.errNonce))
+		}
+	}
+
+	// Clear the ↓ new badge whenever the viewport is at the bottom.
+	if m.viewport.ScrollPercent() >= 0.999 {
+		m.hasNewContent = false
 	}
 
 	return m, tea.Batch(cmds...)
@@ -754,16 +812,19 @@ func (m Model) headerView() string {
 	}
 	totalChars += len(m.streamBuf)
 
-	var rightParts []string
+	var dimParts []string
 	pct := m.viewport.ScrollPercent()
 	if pct < 0.999 && m.viewport.TotalLineCount() > m.viewport.Height {
-		rightParts = append(rightParts, fmt.Sprintf("↑%d%%", int(pct*100)))
+		dimParts = append(dimParts, fmt.Sprintf("↑%d%%", int(pct*100)))
 	}
 	if m.ctxLineCount > 0 {
-		rightParts = append(rightParts, fmt.Sprintf("%dctx", m.ctxLineCount))
+		dimParts = append(dimParts, fmt.Sprintf("%dctx", m.ctxLineCount))
 	}
-	rightParts = append(rightParts, fmt.Sprintf("%d msgs  ~%dtok", m.conv.Len(), totalChars/4))
-	right := headerDimStyle.Render(strings.Join(rightParts, "  "))
+	dimParts = append(dimParts, fmt.Sprintf("%d msgs  ~%dtok", m.conv.Len(), totalChars/4))
+	right := headerDimStyle.Render(strings.Join(dimParts, "  "))
+	if m.hasNewContent {
+		right = newContentBadgeStyle.Render("↓ new") + "  " + right
+	}
 
 	label := "tether"
 	gap := m.width - lipgloss.Width(label) - 1 - lipgloss.Width(modeBadge) - lipgloss.Width(right) - 2
@@ -996,14 +1057,16 @@ func (m *Model) renderContent() {
 	if sb.Len() == 0 {
 		sb.WriteString(dimStyle.Render(
 			"No messages yet. Type a question below.\n\n" +
-				"  enter    send message\n" +
-				"  ctrl+j   insert newline\n" +
-				"  ctrl+r   retry last question\n" +
-				"  ctrl+y   copy last response\n" +
-				"  ctrl+l   clear conversation\n" +
-				"  /clear   clear conversation\n" +
-				"  /debug   toggle context debug info\n" +
-				"  esc      close",
+				"  enter       send message\n" +
+				"  ctrl+j      insert newline\n" +
+				"  ctrl+r      retry last question\n" +
+				"  ctrl+y      copy last response\n" +
+				"  ctrl+l      clear conversation\n" +
+				"  /clear      clear conversation\n" +
+				"  /debug      toggle context debug info\n" +
+				"  /mode       show or set mode (watch/assist)\n" +
+				"  /handoff    hand off a task to Claude Code\n" +
+				"  esc         close",
 		))
 	}
 
@@ -1287,6 +1350,33 @@ func execCommand(command string) tea.Cmd {
 			return cmdExecutedMsg{err: err}
 		}
 		return cmdExecutedMsg{command: command}
+	}
+}
+
+// clearErrAfter returns a Cmd that fires clearErrMsg after 3 seconds.
+// The nonce prevents stale timers from clearing a newer error message.
+func clearErrAfter(nonce int) tea.Cmd {
+	return func() tea.Msg {
+		time.Sleep(3 * time.Second)
+		return clearErrMsg{nonce: nonce}
+	}
+}
+
+func setModeCmd(mode ipc.Mode) tea.Cmd {
+	return func() tea.Msg {
+		conn, err := ipc.Dial()
+		if err != nil {
+			return modeSetMsg{err: fmt.Errorf("daemon not running")}
+		}
+		defer conn.Close()
+		if err := ipc.SendMsg(conn, ipc.TypeSetMode, ipc.SetModePayload{Mode: mode}); err != nil {
+			return modeSetMsg{err: err}
+		}
+		var resp ipc.OKResp
+		if err := ipc.Recv(conn, &resp); err != nil {
+			return modeSetMsg{err: err}
+		}
+		return modeSetMsg{mode: mode}
 	}
 }
 
