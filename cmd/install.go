@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"tether/internal/shellintegration"
+	"github.com/AllDayJon/Tether/internal/shellintegration"
 
 	"github.com/spf13/cobra"
 )

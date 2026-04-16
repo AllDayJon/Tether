@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/ipc"
 )
 
 const (

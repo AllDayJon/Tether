@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"tether/internal/conversation"
-	"tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/conversation"
+	"github.com/AllDayJon/Tether/internal/ipc"
 
 	"github.com/spf13/cobra"
 )

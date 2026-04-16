@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"tether/internal/ipc"
-	"tether/internal/session"
+	"github.com/AllDayJon/Tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/session"
 )
 
 const (

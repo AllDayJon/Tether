@@ -6,9 +6,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
-	"tether/internal/chat"
-	"tether/internal/conversation"
-	"tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/chat"
+	"github.com/AllDayJon/Tether/internal/conversation"
+	"github.com/AllDayJon/Tether/internal/ipc"
 )
 
 var chatCmd = &cobra.Command{

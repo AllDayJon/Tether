@@ -2,7 +2,7 @@ package pty
 
 import (
 	"strings"
-	"tether/internal/session"
+	"github.com/AllDayJon/Tether/internal/session"
 )
 
 // oscParser is a streaming byte parser that sits in the PTY→stdout pipeline.

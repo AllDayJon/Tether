@@ -6,9 +6,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"tether/internal/ipc"
-	"tether/internal/session"
-	"tether/internal/summary"
+	"github.com/AllDayJon/Tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/session"
+	"github.com/AllDayJon/Tether/internal/summary"
 )
 
 // Run starts the IPC server using the provided session buffer and exec function.

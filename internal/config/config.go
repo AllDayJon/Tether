@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/ipc"
 )
 
 // Config holds user-configurable settings. All fields have sensible defaults

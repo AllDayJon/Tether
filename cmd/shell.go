@@ -8,12 +8,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
-	"tether/internal/chat"
-	"tether/internal/conversation"
-	"tether/internal/daemon"
-	"tether/internal/ipc"
-	"tether/internal/pty"
-	"tether/internal/session"
+	"github.com/AllDayJon/Tether/internal/chat"
+	"github.com/AllDayJon/Tether/internal/conversation"
+	"github.com/AllDayJon/Tether/internal/daemon"
+	"github.com/AllDayJon/Tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/pty"
+	"github.com/AllDayJon/Tether/internal/session"
 )
 
 var shellCmd = &cobra.Command{

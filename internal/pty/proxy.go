@@ -11,7 +11,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"tether/internal/session"
+	"github.com/AllDayJon/Tether/internal/session"
 
 	"github.com/creack/pty"
 	"golang.org/x/term"

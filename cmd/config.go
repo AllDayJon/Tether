@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"tether/internal/config"
-	"tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/config"
+	"github.com/AllDayJon/Tether/internal/ipc"
 
 	"github.com/spf13/cobra"
 )

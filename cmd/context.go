@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 	"strings"
-	"tether/internal/claude"
-	"tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/claude"
+	"github.com/AllDayJon/Tether/internal/ipc"
 
 	"github.com/spf13/cobra"
 )

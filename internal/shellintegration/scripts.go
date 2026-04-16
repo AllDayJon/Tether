@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/ipc"
 )
 
 // ScriptBash is the bash shell integration script.

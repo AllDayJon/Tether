@@ -7,8 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	tctx "tether/internal/context"
-	"tether/internal/ipc"
+	tctx "github.com/AllDayJon/Tether/internal/context"
+	"github.com/AllDayJon/Tether/internal/ipc"
 )
 
 const systemPromptStr = "You are Tether, a terminal assistant. You observe the user's terminal session in real time and help when asked.\n\n" +

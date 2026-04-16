@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tether — AI companion for your terminal</title>
+  <title>Tether: AI companion for your terminal</title>
   <meta name="description" content="Tether rides along in your terminal session while you work. When you need help, Claude is already up to speed. No copy-paste. No re-explaining." />
 
   <!-- Open Graph -->
   <meta property="og:type"        content="website" />
-  <meta property="og:title"       content="Tether — AI companion for your terminal" />
-  <meta property="og:description" content="You drive. Claude rides along. A terminal companion that keeps Claude in the loop while you work — SSH sessions, live logs, ad-hoc debugging." />
+  <meta property="og:title"       content="Tether: AI companion for your terminal" />
+  <meta property="og:description" content="You drive. Claude rides along. A terminal companion that keeps Claude in the loop while you work. SSH sessions, live logs, ad-hoc debugging." />
   <meta property="og:url"         content="https://github.com/AllDayJon/Tether" />
 
   <!-- Twitter Card -->
   <meta name="twitter:card"        content="summary" />
-  <meta name="twitter:title"       content="Tether — AI companion for your terminal" />
+  <meta name="twitter:title"       content="Tether: AI companion for your terminal" />
   <meta name="twitter:description" content="You drive. Claude rides along. Tether watches your terminal session, builds context, and is ready when you are." />
 
   <!-- Favicon -->
@@ -57,7 +57,7 @@
     <div class="container">
       <div class="hero-badge">
         <span class="badge-dot"></span>
-        v0.8.0 — Now available
+        v0.8.0 · Now available
       </div>
       <h1 class="hero-headline">
         You drive.<br />
@@ -110,7 +110,7 @@
                 <div class="chat-you">why are these 502s spiking?</div>
                 <div class="chat-claude">
                   <div class="claude-header"><span class="claude-label">Claude</span><span class="chat-ts">14:22</span></div>
-                  <p>Upstream timeout from nginx — <code>worker_processes</code> is likely saturated. Check:</p>
+                  <p>Upstream timeout from nginx. <code>worker_processes</code> is likely saturated. Check:</p>
                   <div class="proposal-box">
                     <div class="proposal-header">Run this command?</div>
                     <div class="proposal-cmd">$ journalctl -u nginx -n 50</div>
@@ -141,7 +141,7 @@
       <div class="section-label">The idea</div>
       <h2 class="section-title">Stop re-explaining what you just did.</h2>
       <p class="section-sub">
-        You're the one doing the work. You're in the terminal — SSH'd into a box, tailing logs, running commands,
+        You're the one doing the work. You're in the terminal, SSH'd into a box, tailing logs, running commands,
         figuring things out. When you want a second opinion from AI, you have to stop, copy output, explain
         what you've been doing, and rebuild the context from scratch. Every single time.
       </p>
@@ -164,14 +164,14 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
           </div>
           <h3>Tether watches silently</h3>
-          <p>Everything in your session is captured in real time and held in memory — commands, output, errors. Nothing is sent anywhere until you ask. Nothing is written to disk.</p>
+          <p>Everything in your session is captured in real time and held in memory: commands, output, errors. Nothing is sent anywhere until you ask. Nothing is written to disk.</p>
         </div>
         <div class="how-card">
           <div class="how-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </div>
           <h3>Ask when you're ready</h3>
-          <p>Open <code>tether chat</code> in any terminal window and ask. Claude already knows what's going on — no copy-paste, no re-explaining, no context loss.</p>
+          <p>Open <code>tether chat</code> in any terminal window and ask. Claude already knows what's going on. No copy-paste, no re-explaining, no context loss.</p>
         </div>
       </div>
     </div>
@@ -184,7 +184,7 @@
       <h2 class="section-title">Claude arrives informed, not overwhelmed.</h2>
       <p class="section-sub">
         Tether doesn't just dump your terminal history into every message. It watches as you work,
-        then figures out what's actually relevant to your question — so Claude has the right picture
+        then figures out what's actually relevant to your question, so Claude has the right picture
         without you spending a fortune on tokens or doing any curation yourself.
       </p>
 
@@ -193,7 +193,7 @@
           <div class="pipeline-num">1</div>
           <div class="pipeline-body">
             <div class="pipeline-title">It watches while you work</div>
-            <div class="pipeline-desc">Everything in your session is captured in the background — commands, output, errors. You don't manage it. Nothing is sent anywhere until you ask.</div>
+            <div class="pipeline-desc">Everything in your session is captured in the background: commands, output, errors. You don't manage it. Nothing is sent anywhere until you ask.</div>
             <div class="pipeline-stat">Automatic · no setup per question</div>
           </div>
         </div>
@@ -202,7 +202,7 @@
           <div class="pipeline-num">2</div>
           <div class="pipeline-body">
             <div class="pipeline-title">It finds what matters to your question</div>
-            <div class="pipeline-desc">When you ask something, Tether scans your recent activity and picks out the lines most relevant to what you asked. Error messages and failures always surface — even if your question doesn't use the exact same words.</div>
+            <div class="pipeline-desc">When you ask something, Tether scans your recent activity and picks out the lines most relevant to what you asked. Error messages and failures always surface, even if your question doesn't use the exact same words.</div>
             <div class="pipeline-stat">Relevant lines selected · errors always bubble up</div>
           </div>
         </div>
@@ -211,7 +211,7 @@
           <div class="pipeline-num pipeline-num-result">✓</div>
           <div class="pipeline-body">
             <div class="pipeline-title">Claude gets the right picture</div>
-            <div class="pipeline-desc">Not a raw dump — a curated snapshot. The relevant terminal output, your conversation history, and a rolling summary of your session. Claude knows what you've been doing without you having to explain it.</div>
+            <div class="pipeline-desc">Not a raw dump. A curated snapshot of the relevant terminal output, your conversation history, and a rolling summary of your session. Claude knows what you've been doing without you having to explain it.</div>
             <div class="pipeline-stat-row">
               <div class="pipeline-stat-item">
                 <div class="stat-val">everything</div>
@@ -252,7 +252,7 @@
           </div>
           <h3>Watch</h3>
           <p class="mode-tagline">Read-only. No execution risk.</p>
-          <p>Claude can answer questions, explain errors, and suggest commands in plain text. It cannot type into your terminal. The default — no risk, all insight.</p>
+          <p>Claude can answer questions, explain errors, and suggest commands in plain text. It cannot type into your terminal. The default: no risk, all insight.</p>
           <div class="mode-can">
             <div class="can-item can-yes"><span>Answer questions</span></div>
             <div class="can-item can-yes"><span>Explain errors</span></div>
@@ -268,27 +268,12 @@
           </div>
           <h3>Assist</h3>
           <p class="mode-tagline">Propose + approve. You stay in control.</p>
-          <p>Claude proposes commands. A proposal UI appears — you approve, edit, or reject each one with a single keystroke. Nothing runs without your say-so.</p>
+          <p>Claude proposes commands. A proposal UI appears: you approve, edit, or reject each one with a single keystroke. Press <code>[t]</code> in the chat TUI to enable auto-run, which automatically executes commands on your allow list.</p>
           <div class="mode-can">
             <div class="can-item can-yes"><span>Everything in Watch</span></div>
             <div class="can-item can-yes"><span>Propose commands</span></div>
             <div class="can-item can-yes"><span>You approve each proposal</span></div>
-            <div class="can-item can-no"><span>Auto-execute anything</span></div>
-          </div>
-        </div>
-
-        <div class="mode-card mode-act-card">
-          <div class="mode-card-header">
-            <span class="mode-pill pill-act">ACT</span>
-          </div>
-          <h3>Act</h3>
-          <p class="mode-tagline">Speed. You're watching closely.</p>
-          <p>Allow-listed commands execute automatically. Everything else is still proposed. Build an allow list as you go — approve once with <code>[a]</code>, runs automatically for the rest of the session.</p>
-          <div class="mode-can">
-            <div class="can-item can-yes"><span>Everything in Assist</span></div>
-            <div class="can-item can-yes"><span>Auto-run allow-listed commands</span></div>
-            <div class="can-item can-yes"><span>Session allow list with [a]</span></div>
-            <div class="can-item can-no"><span>Override hard-deny rules</span></div>
+            <div class="can-item can-yes"><span>Optional auto-run for allow-listed commands</span></div>
           </div>
         </div>
       </div>
@@ -297,8 +282,60 @@
         <div class="code-block">
           <div class="code-block-header">Switch modes anytime</div>
           <pre><code><span class="c-dim">$</span> tether mode watch    <span class="c-comment"># read-only, no execution</span>
-<span class="c-dim">$</span> tether mode assist   <span class="c-comment"># proposals, you approve each</span>
-<span class="c-dim">$</span> tether mode act      <span class="c-comment"># allow-listed commands auto-run</span></code></pre>
+<span class="c-dim">$</span> tether mode assist   <span class="c-comment"># proposals, you approve each one</span></code></pre>
+        </div>
+      </div>
+
+      <div class="handoff-callout">
+        <div class="handoff-callout-inner">
+          <div class="handoff-callout-text">
+            <div class="handoff-callout-label">Ready to switch seats?</div>
+            <h3 class="handoff-callout-title">Tether is built for you to drive. <span class="gradient-text">/handoff is how you hand the keys to Claude.</span></h3>
+            <p>You've been in control, watching, asking questions, narrowing things down. When you know what needs doing and want Claude Code to take over, type <code>/handoff &lt;task&gt;</code>. Tether bundles everything it knows into a structured brief: your current directory, git state, detected errors, and the relevant terminal output. Claude Code launches with it as its first message and starts informed, not cold.</p>
+          </div>
+          <div class="handoff-callout-example">
+            <div class="terminal-window">
+              <div class="terminal-chrome">
+                <div class="terminal-dots">
+                  <span class="dot dot-red"></span>
+                  <span class="dot dot-yellow"></span>
+                  <span class="dot dot-green"></span>
+                </div>
+                <div class="terminal-title">tether chat</div>
+              </div>
+              <div class="terminal-body">
+                <div class="terminal-pane">
+                  <div class="pane-header">
+                    <span class="tether-name">tether</span>
+                    <span class="mode-badge mode-assist">ASSIST</span>
+                    <span class="watching">42ctx  8 msg</span>
+                  </div>
+                  <div class="terminal-content">
+                    <div class="chat-you">/handoff nginx workers are saturated, fix the config and reload</div>
+                    <div class="handoff-review-box">
+                      <div class="handoff-review-header">Handoff to Claude Code</div>
+                      <div class="handoff-review-body">
+                        <div class="handoff-review-row"><span class="handoff-review-key">goal</span><span class="handoff-review-val">fix nginx worker saturation</span></div>
+                        <div class="handoff-review-row"><span class="handoff-review-key">dir</span><span class="handoff-review-val">/etc/nginx</span></div>
+                        <div class="handoff-review-row"><span class="handoff-review-key">branch</span><span class="handoff-review-val">main · 2 uncommitted</span></div>
+                        <div class="handoff-review-row"><span class="handoff-review-key">errors</span><span class="handoff-review-val t-err">worker_processes limit (×14)</span></div>
+                        <div class="handoff-review-row"><span class="handoff-review-key"></span><span class="handoff-review-val t-err">upstream timed out (×8)</span></div>
+                        <div class="handoff-review-row"><span class="handoff-review-key">context</span><span class="handoff-review-val">42 lines selected</span></div>
+                      </div>
+                      <div class="proposal-keys" style="padding: 8px 12px;">
+                        <span class="key">Enter</span> launch
+                        <span class="key">x</span> cancel
+                      </div>
+                    </div>
+                    <div class="tether-input">
+                      <span class="input-prompt">↑</span>
+                      <span style="color: var(--text-3); font-size: 11px;"> review handoff above</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -337,14 +374,14 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
           <h4>SSH-transparent</h4>
-          <p>Tether captures everything in your local PTY — including SSH session output. No install needed on remote hosts. Works anywhere you can SSH.</p>
+          <p>Tether captures everything in your local PTY, including SSH session output. No install needed on remote hosts. Works anywhere you can SSH.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon icon-orange">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           </div>
           <h4>Abort anytime</h4>
-          <p><code>Ctrl+K</code> stops a streaming response mid-flight. Change your mind, rephrase, and ask again — no need to wait for Claude to finish.</p>
+          <p><code>Ctrl+K</code> stops a streaming response mid-flight. Change your mind, rephrase, and ask again. No need to wait for Claude to finish.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon icon-blue">
@@ -365,7 +402,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           </div>
           <h4>Token visibility</h4>
-          <p>Each response shows estimated prompt and response token cost. Type <code>/debug</code> in chat for a full breakdown — keywords extracted, lines fetched vs. filtered, and per-component token estimates.</p>
+          <p>Each response shows estimated prompt and response token cost. Type <code>/debug</code> in chat for a full breakdown: keywords extracted, lines fetched vs. filtered, and per-component token estimates.</p>
         </div>
       </div>
     </div>
@@ -390,7 +427,7 @@
           </div>
           <div class="rule-item rule-config">
             <div class="rule-label">Config rules</div>
-            <div class="rule-desc">Your <code>deny</code>, <code>protect</code>, and <code>allow</code> lists in <code>~/.tether/config.json</code> — full control over what is trusted.</div>
+            <div class="rule-desc">Your <code>deny</code>, <code>protect</code>, and <code>allow</code> lists in <code>~/.tether/config.json</code>. Full control over what is trusted.</div>
           </div>
           <div class="rule-item rule-session">
             <div class="rule-label">Session allow list</div>
@@ -417,13 +454,13 @@
               <div class="flow-branch">
                 <div class="flow-node flow-allow">Approved?</div>
                 <div class="flow-arrow">↓</div>
-                <div class="flow-node flow-result-run">Run in Act mode</div>
+                <div class="flow-node flow-result-run">Run if auto-run on</div>
               </div>
             </div>
           </div>
           <div class="privacy-note">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            Terminal data is held in memory only — never written to disk. No Tether servers. No telemetry. Only traffic is Claude Code CLI → Anthropic API, same as using Claude Code normally.
+            Terminal data is held in memory only, never written to disk. No Tether servers. No telemetry. Only traffic is Claude Code CLI → Anthropic API, same as using Claude Code normally.
           </div>
         </div>
       </div>
@@ -467,7 +504,7 @@
       <p class="section-sub">
         The installer detects your OS and architecture, downloads the right binary to <code>/usr/local/bin</code>,
         and sets up shell integration automatically. The only prerequisite is the
-        <strong>Claude Code CLI</strong> — <code>claude</code> must be on PATH and logged in.
+        <strong>Claude Code CLI</strong>: <code>claude</code> must be on PATH and logged in.
         Tether uses it for all AI calls, so there's no separate API key or billing.
       </p>
 
@@ -572,7 +609,7 @@
           <div class="cmd-list">
             <div class="cmd-item"><code>tether chat</code><span>Open the chat TUI in any terminal</span></div>
             <div class="cmd-item"><code>tether ask &lt;question&gt;</code><span>One-shot question to stdout</span></div>
-            <div class="cmd-item"><code>tether mode [watch|assist|act]</code><span>Show or change mode</span></div>
+            <div class="cmd-item"><code>tether mode [watch|assist]</code><span>Show or change mode</span></div>
           </div>
         </div>
         <div class="cmd-group">
@@ -599,8 +636,9 @@
         </div>
         <div class="keybinds-label" style="margin-top:1.5rem">Chat slash commands</div>
         <div class="keybinds-grid">
-          <div class="kb-item"><kbd>/debug</kbd><span>Toggle debug block — keywords, line counts, token breakdown</span></div>
+          <div class="kb-item"><kbd>/debug</kbd><span>Toggle debug block: keywords, line counts, token breakdown</span></div>
           <div class="kb-item"><kbd>/clear</kbd><span>Clear conversation history</span></div>
+          <div class="kb-item"><kbd>/handoff &lt;task&gt;</kbd><span>Package session context and launch Claude Code with it pre-loaded</span></div>
         </div>
       </div>
     </div>
@@ -619,8 +657,8 @@
             <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="faq-a">
-            <p>The core difference is who's doing the work. With most AI tools, you hand the AI a goal and it executes — great for planned tasks, but it only knows what you tell it. The moment you go off-script and start doing things yourself, the AI loses context entirely.</p>
-            <p>Tether is built for when <em>you're</em> already at the wheel. You work normally — SSH into servers, tail logs, poke around — and Tether keeps Claude up to speed in the background. When you want help, you just ask. No copy-paste, no re-explaining what you've been doing for the last ten minutes.</p>
+            <p>The core difference is who's doing the work. With most AI tools, you hand the AI a goal and it executes. That's great for planned tasks, but it only knows what you tell it. The moment you go off-script and start doing things yourself, the AI loses context entirely.</p>
+            <p>Tether is built for when <em>you're</em> already at the wheel. You work normally: SSH into servers, tail logs, poke around. Tether keeps Claude up to speed in the background. When you want help, you just ask. No copy-paste, no re-explaining what you've been doing for the last ten minutes.</p>
           </div>
         </div>
 
@@ -630,7 +668,7 @@
             <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="faq-a">
-            <p>Tether itself is free and open source. The only requirement is the <strong>Claude Code CLI</strong> — you'll need a Claude subscription with <code>claude</code> installed and logged in on your machine. Tether uses it for all AI calls, so there's no separate API key, no extra billing, and no Tether account.</p>
+            <p>Tether itself is free and open source. The only requirement is the <strong>Claude Code CLI</strong>. You'll need a Claude subscription with <code>claude</code> installed and logged in on your machine. Tether uses it for all AI calls, so there's no separate API key, no extra billing, and no Tether account.</p>
           </div>
         </div>
 
@@ -640,7 +678,7 @@
             <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="faq-a">
-            <p>A focused snapshot of your recent terminal activity, filtered for relevance to your question, plus your conversation history and a brief summary of your session. Tether is careful about what it includes — irrelevant output is dropped so you're not burning tokens on noise. Type <code>/debug</code> in chat to see exactly what went into any message.</p>
+            <p>A focused snapshot of your recent terminal activity, filtered for relevance to your question, plus your conversation history and a brief summary of your session. Tether is careful about what it includes; irrelevant output is dropped so you're not burning tokens on noise. Type <code>/debug</code> in chat to see exactly what went into any message.</p>
           </div>
         </div>
 
@@ -650,7 +688,7 @@
             <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="faq-a">
-            <p>No. Tether has no servers of its own and collects no analytics. The only network traffic is the Claude Code CLI (<code>claude -p</code>) talking to Anthropic's API — the same traffic as using Claude Code directly, governed by <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">Anthropic's privacy policy</a>.</p>
+            <p>No. Tether has no servers of its own and collects no analytics. The only network traffic is the Claude Code CLI (<code>claude -p</code>) talking to Anthropic's API, the same traffic as using Claude Code directly, governed by <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">Anthropic's privacy policy</a>.</p>
           </div>
         </div>
 
@@ -660,7 +698,7 @@
             <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="faq-a">
-            <p>No. <code>tether shell</code> runs on your local machine and captures everything you see — including output from SSH sessions running inside it. Tether never needs to be on the remote host.</p>
+            <p>No. <code>tether shell</code> runs on your local machine and captures everything you see, including output from SSH sessions running inside it. Tether never needs to be on the remote host.</p>
           </div>
         </div>
 
@@ -670,7 +708,7 @@
             <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="faq-a">
-            <p>Whatever you already use. Run <code>tether shell</code> to start your session and <code>tether chat</code> in a second terminal window or pane. If you use tmux, iTerm2, Kitty, Alacritty — it all works the same way.</p>
+            <p>Whatever you already use. Run <code>tether shell</code> to start your session and <code>tether chat</code> in a second terminal window or pane. If you use tmux, iTerm2, Kitty, or Alacritty, it all works the same way.</p>
           </div>
         </div>
       </div>

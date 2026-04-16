@@ -16,12 +16,12 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 
-	"tether/internal/cmdguard"
-	"tether/internal/config"
-	tctx "tether/internal/context"
-	"tether/internal/conversation"
-	"tether/internal/handoff"
-	"tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/cmdguard"
+	"github.com/AllDayJon/Tether/internal/config"
+	tctx "github.com/AllDayJon/Tether/internal/context"
+	"github.com/AllDayJon/Tether/internal/conversation"
+	"github.com/AllDayJon/Tether/internal/handoff"
+	"github.com/AllDayJon/Tether/internal/ipc"
 )
 
 // ── Colors ────────────────────────────────────────────────────────────────────

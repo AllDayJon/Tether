@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	tctx "tether/internal/context"
-	"tether/internal/ipc"
+	tctx "github.com/AllDayJon/Tether/internal/context"
+	"github.com/AllDayJon/Tether/internal/ipc"
 )
 
 // Failure is a detected error pattern and how many times it appeared.
