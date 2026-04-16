@@ -12,7 +12,7 @@ When you need help, it's already up to speed — no copy-paste, no re-explaining
 <br>
 
 [![CI](https://github.com/AllDayJon/Tether/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/AllDayJon/Tether/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.8.0-cyan?style=flat-square)](https://github.com/AllDayJon/Tether/releases)
+[![Version](https://img.shields.io/badge/version-0.9.0-cyan?style=flat-square)](https://github.com/AllDayJon/Tether/releases)
 [![Go](https://img.shields.io/badge/go-1.22+-00ADD8?style=flat-square&logo=go)](https://golang.org)
 [![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/powered%20by-Claude%20Code-blueviolet?style=flat-square)](https://claude.ai/code)

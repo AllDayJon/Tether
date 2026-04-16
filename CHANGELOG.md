@@ -4,6 +4,21 @@ All notable changes to Tether are documented here.
 
 ---
 
+## [0.9.0] — 2026-04-15
+
+### Added
+- **One-liner installer** — `curl -fsSL https://raw.githubusercontent.com/AllDayJon/Tether/main/install.sh | sh` detects OS and architecture, installs to `/usr/local/bin`, and runs shell integration setup automatically.
+- **`/handoff` command** — packages your current session context (cwd, git state, recent errors, terminal output) and launches Claude Code with it pre-loaded. Use when you want to hand the task off to Claude Code while keeping full context.
+- **macOS PATH warning** — `tether install` now warns when the binary location is not on PATH and prints the correct shell command to fix it.
+- **CONTRIBUTING.md** and **SECURITY.md** — contribution guide and private vulnerability disclosure process.
+
+### Changed
+- Go module renamed from `tether` to `github.com/AllDayJon/Tether`.
+- **Act mode removed** — the two-mode system is now Watch and Assist only. Assist mode's auto-run toggle (`[t]` in chat) replaces Act mode's behaviour.
+- Website overhauled for end-user clarity: install flow, handoff callout, mode descriptions updated.
+
+---
+
 ## [0.8.0] — 2026-04-06
 
 ### Added

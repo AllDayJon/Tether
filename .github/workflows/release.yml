@@ -32,7 +32,7 @@ jobs:
         run: |
           mkdir dist
           VERSION="${GITHUB_REF_NAME}"
-          LDFLAGS="-s -w -X tether/cmd.Version=${VERSION}"
+          LDFLAGS="-s -w -X github.com/AllDayJon/Tether/cmd.Version=${VERSION}"
 
           GOOS=linux  GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/tether-linux-amd64  .
           GOOS=linux  GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o dist/tether-linux-arm64  .
