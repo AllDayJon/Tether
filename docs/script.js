@@ -20,7 +20,7 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
   });
 });
 
-// ── GitHub star count ─────────────────────────────────────────
+// ── GitHub star count + latest version ───────────────────────
 fetch('https://api.github.com/repos/AllDayJon/Tether')
   .then(r => r.json())
   .then(data => {
@@ -33,6 +33,16 @@ fetch('https://api.github.com/repos/AllDayJon/Tether')
     }
   })
   .catch(() => {}); // silently ignore if repo doesn't exist yet
+
+fetch('https://api.github.com/repos/AllDayJon/Tether/releases/latest')
+  .then(r => r.json())
+  .then(data => {
+    if (!data.tag_name) return;
+    document.querySelectorAll('.version-badge').forEach(el => {
+      el.textContent = data.tag_name;
+    });
+  })
+  .catch(() => {});
 
 // ── FAQ accordion ─────────────────────────────────────────────
 document.querySelectorAll('.faq-q').forEach(btn => {
