@@ -1,9 +1,13 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"os"
-	"os/exec"
+	"os/signal"
+	"syscall"
+	"time"
 	"tether/internal/ipc"
 
 	"github.com/spf13/cobra"
@@ -31,9 +35,42 @@ func runLogs(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	tail := exec.Command("tail", "-f", logPath)
-	tail.Stdout = os.Stdout
-	tail.Stderr = os.Stderr
-	tail.Stdin = os.Stdin
-	return tail.Run()
+	return tailFollow(logPath)
+}
+
+// tailFollow streams a file's contents and polls for new data until
+// interrupted. It is a dependency-free replacement for `tail -f`.
+func tailFollow(path string) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// Print existing content first.
+	if _, err := io.Copy(os.Stdout, f); err != nil {
+		return err
+	}
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(sigCh)
+
+	ticker := time.NewTicker(250 * time.Millisecond)
+	defer ticker.Stop()
+
+	scanner := bufio.NewScanner(f)
+	for {
+		select {
+		case <-sigCh:
+			return nil
+		case <-ticker.C:
+			for scanner.Scan() {
+				fmt.Println(scanner.Text())
+			}
+			if err := scanner.Err(); err != nil {
+				return err
+			}
+		}
+	}
 }

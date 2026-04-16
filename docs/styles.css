@@ -1061,6 +1061,28 @@ code {
   font-size: 20px;
 }
 
+.step-note {
+  font-size: 13px;
+  color: var(--text-3);
+  margin-top: 10px;
+}
+
+.dep-manual-link {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.dep-manual-link a {
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.dep-manual-link a:hover { color: var(--cyan); }
+
 .copy-btn {
   background: transparent;
   border: 1px solid var(--border-2);

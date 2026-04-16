@@ -164,7 +164,7 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
           </div>
           <h3>Tether watches silently</h3>
-          <p>Your shell runs through Tether's PTY proxy. Output is captured in real time, buffered in memory, and ready to be filtered when you ask — never written to disk.</p>
+          <p>Everything in your session is captured in real time and held in memory — commands, output, errors. Nothing is sent anywhere until you ask. Nothing is written to disk.</p>
         </div>
         <div class="how-card">
           <div class="how-icon">
@@ -402,22 +402,22 @@
           <div class="flow-diagram">
             <div class="flow-node flow-start">Claude suggests a command</div>
             <div class="flow-arrow">↓</div>
-            <div class="flow-node flow-classify">cmdguard.Classify()</div>
+            <div class="flow-node flow-classify">Safety classifier checks it</div>
             <div class="flow-branches">
               <div class="flow-branch">
-                <div class="flow-node flow-block">Hard deny?</div>
+                <div class="flow-node flow-block">Dangerous?</div>
                 <div class="flow-arrow">↓</div>
-                <div class="flow-node flow-result-block">Block</div>
+                <div class="flow-node flow-result-block">Blocked</div>
               </div>
               <div class="flow-branch">
-                <div class="flow-node flow-propose">Hard protect?</div>
+                <div class="flow-node flow-propose">Sensitive?</div>
                 <div class="flow-arrow">↓</div>
-                <div class="flow-node flow-result-propose">Always propose</div>
+                <div class="flow-node flow-result-propose">Always ask you first</div>
               </div>
               <div class="flow-branch">
-                <div class="flow-node flow-allow">Allow list?</div>
+                <div class="flow-node flow-allow">Approved?</div>
                 <div class="flow-arrow">↓</div>
-                <div class="flow-node flow-result-run">Execute in Act</div>
+                <div class="flow-node flow-result-run">Run in Act mode</div>
               </div>
             </div>
           </div>
@@ -463,47 +463,32 @@
   <section class="section" id="install">
     <div class="container">
       <div class="section-label">Installation</div>
-      <h2 class="section-title">Up in four commands</h2>
+      <h2 class="section-title">One command and you're done</h2>
       <p class="section-sub">
-        Tether is built for developers and engineers who live in the terminal.
-        You'll need <strong>Go 1.22+</strong> to build from source
-        and a <strong>Claude Code CLI</strong> subscription (<code>claude</code> on PATH and logged in) — Tether uses it for all AI calls, so there's no separate API key or billing.
+        The installer detects your OS and architecture, downloads the right binary to <code>/usr/local/bin</code>,
+        and sets up shell integration automatically. The only prerequisite is the
+        <strong>Claude Code CLI</strong> — <code>claude</code> must be on PATH and logged in.
+        Tether uses it for all AI calls, so there's no separate API key or billing.
       </p>
 
       <div class="install-steps">
         <div class="install-step">
           <div class="step-num">1</div>
           <div class="step-content">
-            <div class="step-title">Clone and install</div>
+            <div class="step-title">Install Tether</div>
             <div class="code-block">
               <div class="code-block-header">
                 <span>shell</span>
-                <button class="copy-btn" data-target="install-clone">Copy</button>
+                <button class="copy-btn" data-target="install-oneliner">Copy</button>
               </div>
-              <pre><code id="install-clone">git clone https://github.com/AllDayJon/Tether
-cd tether
-go install .</code></pre>
+              <pre><code id="install-oneliner">curl -fsSL https://raw.githubusercontent.com/AllDayJon/Tether/main/install.sh | sh</code></pre>
             </div>
+            <div class="step-note">Then open a new terminal for the shell integration to take effect.</div>
           </div>
         </div>
 
         <div class="install-step">
           <div class="step-num">2</div>
-          <div class="step-content">
-            <div class="step-title">Install shell integration</div>
-            <div class="code-block">
-              <div class="code-block-header">
-                <span>shell</span>
-                <button class="copy-btn" data-target="install-shell">Copy</button>
-              </div>
-              <pre><code id="install-shell">tether install
-# then restart your shell (or source your shell config)</code></pre>
-            </div>
-          </div>
-        </div>
-
-        <div class="install-step">
-          <div class="step-num">3</div>
           <div class="step-content">
             <div class="step-title">Start a tether shell session</div>
             <div class="code-block">
@@ -512,14 +497,13 @@ go install .</code></pre>
                 <button class="copy-btn" data-target="install-start">Copy</button>
               </div>
               <pre><code id="install-start">tether shell
-# this starts your shell through tether's PTY proxy
 # work normally — tether watches in the background</code></pre>
             </div>
           </div>
         </div>
 
         <div class="install-step">
-          <div class="step-num">4</div>
+          <div class="step-num">3</div>
           <div class="step-content">
             <div class="step-title">Open chat in another terminal</div>
             <div class="code-block">
@@ -528,18 +512,18 @@ go install .</code></pre>
                 <button class="copy-btn" data-target="install-chat">Copy</button>
               </div>
               <pre><code id="install-chat">tether chat
-# opens the chat TUI — ask anything, Claude already has context</code></pre>
+# ask anything — Claude already has context</code></pre>
             </div>
           </div>
         </div>
       </div>
 
       <div class="install-deps">
-        <div class="dep-title">Dependencies</div>
+        <div class="dep-title">Requirements</div>
         <div class="deps-row">
           <div class="dep-item">
-            <div class="dep-name">Go 1.22+</div>
-            <div class="dep-desc">For building from source</div>
+            <div class="dep-name">Linux or macOS</div>
+            <div class="dep-desc">x86_64 or ARM64</div>
           </div>
           <div class="dep-sep">·</div>
           <div class="dep-item">
@@ -551,6 +535,10 @@ go install .</code></pre>
             <div class="dep-name">bash / zsh / fish</div>
             <div class="dep-desc">Shell integration supports all three</div>
           </div>
+        </div>
+        <div class="dep-manual-link">
+          Prefer to install manually?
+          <a href="https://github.com/AllDayJon/Tether/releases" target="_blank" rel="noopener">Download a binary from the releases page →</a>
         </div>
       </div>
     </div>
@@ -574,9 +562,9 @@ go install .</code></pre>
         <div class="cmd-group">
           <div class="cmd-group-label">Session</div>
           <div class="cmd-list">
-            <div class="cmd-item"><code>tether shell</code><span>Start your shell through the PTY proxy</span></div>
+            <div class="cmd-item"><code>tether shell</code><span>Start your shell with context capture</span></div>
             <div class="cmd-item"><code>tether status</code><span>Active sessions, mode, daemon state</span></div>
-            <div class="cmd-item"><code>tether tail</code><span>Stream session output live</span></div>
+            <div class="cmd-item"><code>tether logs</code><span>Stream the daemon log live</span></div>
           </div>
         </div>
         <div class="cmd-group">
@@ -642,7 +630,7 @@ go install .</code></pre>
             <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="faq-a">
-            <p>Tether itself is free and open source. The only requirement beyond Go 1.22+ is the <strong>Claude Code CLI</strong> — you'll need a Claude subscription with <code>claude</code> installed and logged in on your machine. Tether uses it for all AI calls, so there's no separate API key, no extra billing, and no Tether account.</p>
+            <p>Tether itself is free and open source. The only requirement is the <strong>Claude Code CLI</strong> — you'll need a Claude subscription with <code>claude</code> installed and logged in on your machine. Tether uses it for all AI calls, so there's no separate API key, no extra billing, and no Tether account.</p>
           </div>
         </div>
 

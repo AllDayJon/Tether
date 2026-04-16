@@ -47,7 +47,20 @@ When you need help, it's already up to speed — no copy-paste, no re-explaining
 
 ## Install
 
-**Download a binary** — [releases page](https://github.com/AllDayJon/Tether/releases)
+```sh
+curl -fsSL https://raw.githubusercontent.com/AllDayJon/Tether/main/install.sh | sh
+```
+
+Open a new terminal, then run `tether shell`.
+
+That's all. The script detects your OS and architecture, downloads the right binary to `/usr/local/bin`, and sets up shell integration automatically.
+
+<details>
+<summary>Manual install</summary>
+
+<br>
+
+Download the binary for your platform from the [releases page](https://github.com/AllDayJon/Tether/releases):
 
 | Platform | Binary |
 |----------|--------|
@@ -57,7 +70,7 @@ When you need help, it's already up to speed — no copy-paste, no re-explaining
 | macOS Apple Silicon | `tether-darwin-arm64` |
 
 ```sh
-# macOS Apple Silicon example
+# Example — macOS Apple Silicon
 curl -L https://github.com/AllDayJon/Tether/releases/latest/download/tether-darwin-arm64 -o tether
 chmod +x tether && sudo mv tether /usr/local/bin/
 
@@ -67,19 +80,21 @@ curl -L https://github.com/AllDayJon/Tether/releases/latest/download/checksums.t
 curl -L https://github.com/AllDayJon/Tether/releases/latest/download/checksums.txt | grep tether-darwin-arm64 | shasum -a 256 -c
 ```
 
-**Or build from source** (requires Go 1.22+)
+Then set up shell integration:
 
 ```sh
-git clone https://github.com/AllDayJon/Tether && cd tether && go install .
+tether install   # adds source line to your shell config (bash, zsh, or fish)
+# open a new terminal
+tether doctor    # verify everything is ready
 ```
 
-**Then install shell integration** (bash, zsh, or fish)
+**Build from source** (requires Go 1.22+):
 
 ```sh
-tether install        # writes integration scripts, adds source line to your shell config
-# restart your shell
-tether doctor         # verify everything is ready
+git clone https://github.com/AllDayJon/Tether && cd Tether && go install .
 ```
+
+</details>
 
 ---
 
