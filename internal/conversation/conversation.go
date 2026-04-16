@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/ipc"
 )
 
 const (
@@ -155,13 +155,8 @@ func modeInstructions(mode string) string {
 		return "[Mode: ASSIST]\n" +
 			"When you want the user to run a command, wrap exactly ONE command in a ```bash code block.\n" +
 			"Choose the single best command for the situation — do not offer multiple alternatives.\n" +
-			"The user will be shown a proposal to approve or reject before anything executes.\n" +
-			"Only put commands you actually intend to run in bash blocks — use plain text for explanations.\n"
-	case "act":
-		return "[Mode: ACT]\n" +
-			"Commands you output in ```bash blocks will be executed automatically if they are on\n" +
-			"the user's allow list. Commands not on the allow list will be shown as proposals.\n" +
-			"Output exactly ONE ```bash block containing the single best command. Do not give alternatives.\n" +
+			"Commands on the user's allow list may execute automatically; others require approval.\n" +
+			"Only put commands you actually intend to run in bash blocks — use plain text for explanations.\n" +
 			"Be deliberate — only include commands you are confident are correct for the current context.\n"
 	default:
 		return ""

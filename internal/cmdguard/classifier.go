@@ -10,14 +10,14 @@
 //	Config lists are evaluated next:
 //	  Deny    — additional patterns the operator never wants to run via tether.
 //	  Protect — patterns that always require human approval.
-//	  Allow   — patterns that may auto-execute in Act mode.
-//	  Default — anything not in any list: approval required, blocked in Act.
+//	  Allow   — patterns that may auto-execute when auto-run is enabled.
+//	  Default — anything not in any list: approval required.
 //
 // Decision by mode:
 //
-//	Watch:  always Block   (no execution path exists)
-//	Assist: Deny → Block   | everything else → Propose
-//	Act:    Deny → Block   | Protect/Default → Propose | Allow → Execute
+//	Watch:              always Block
+//	Assist:             Deny → Block | everything else → Propose
+//	Assist + autoExec:  Deny → Block | Protect/Default → Propose | Allow → Execute
 package cmdguard
 
 import (
@@ -120,8 +120,9 @@ func Classify(cmd string, allow, protect, deny []string) Class {
 }
 
 // Decide returns what tether should do with cmd given mode and config lists.
-// mode should be one of "watch", "assist", "act".
-func Decide(cmd, mode string, allow, protect, deny []string) Decision {
+// mode should be "watch" or "assist". autoExec enables auto-execution of
+// allow-listed commands in Assist mode (toggled by the user in the TUI).
+func Decide(cmd, mode string, autoExec bool, allow, protect, deny []string) Decision {
 	class := Classify(cmd, allow, protect, deny)
 
 	switch mode {
@@ -132,17 +133,10 @@ func Decide(cmd, mode string, allow, protect, deny []string) Decision {
 		if class == ClassDenied {
 			return DecisionBlock
 		}
-		return DecisionPropose
-
-	case "act":
-		switch class {
-		case ClassDenied:
-			return DecisionBlock
-		case ClassAllowed:
+		if autoExec && class == ClassAllowed {
 			return DecisionExecute
-		default: // Protected or Default — fall back to proposal
-			return DecisionPropose
 		}
+		return DecisionPropose
 	}
 
 	return DecisionBlock // safe default for unknown modes

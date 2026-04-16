@@ -2,7 +2,7 @@ package context
 
 import (
 	"testing"
-	"tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/ipc"
 )
 
 // ── extractKeywords ───────────────────────────────────────────────────────────

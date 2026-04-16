@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"tether/internal/claude"
-	"tether/internal/config"
-	tctx "tether/internal/context"
-	"tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/claude"
+	"github.com/AllDayJon/Tether/internal/config"
+	tctx "github.com/AllDayJon/Tether/internal/context"
+	"github.com/AllDayJon/Tether/internal/ipc"
 
 	"github.com/spf13/cobra"
 )

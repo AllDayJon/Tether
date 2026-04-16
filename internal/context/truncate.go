@@ -2,7 +2,7 @@ package context
 
 import (
 	"fmt"
-	"tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/ipc"
 )
 
 const (

@@ -1,4 +1,4 @@
-module tether
+module github.com/AllDayJon/Tether
 
 go 1.25.0
 

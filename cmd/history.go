@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"strings"
-	"tether/internal/conversation"
+	"github.com/AllDayJon/Tether/internal/conversation"
 
 	"github.com/spf13/cobra"
 )

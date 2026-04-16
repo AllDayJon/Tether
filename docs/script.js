@@ -21,7 +21,7 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
 });
 
 // ── GitHub star count ─────────────────────────────────────────
-fetch('https://api.github.com/repos/allday/tether')
+fetch('https://api.github.com/repos/AllDayJon/Tether')
   .then(r => r.json())
   .then(data => {
     if (data.stargazers_count != null) {

@@ -31,8 +31,7 @@ type Mode string
 
 const (
 	ModeWatch  Mode = "watch"  // read-only — Claude observes and advises only
-	ModeAssist Mode = "assist" // Claude proposes commands, human approves each one
-	ModeAct    Mode = "act"    // Claude auto-executes allow-listed commands
+	ModeAssist Mode = "assist" // Claude proposes commands; auto-run can be toggled on
 )
 
 // Msg is the envelope for all IPC messages.

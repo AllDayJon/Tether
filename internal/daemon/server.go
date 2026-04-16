@@ -6,9 +6,9 @@ import (
 	"log"
 	"net"
 	"sync"
-	"tether/internal/ipc"
-	"tether/internal/session"
-	"tether/internal/summary"
+	"github.com/AllDayJon/Tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/session"
+	"github.com/AllDayJon/Tether/internal/summary"
 )
 
 type server struct {
@@ -86,7 +86,7 @@ func (s *server) dispatch(conn net.Conn, msg ipc.Msg) {
 			s.writeErr(conn, "bad set_mode payload: "+err.Error())
 			return
 		}
-		if p.Mode != ipc.ModeWatch && p.Mode != ipc.ModeAssist && p.Mode != ipc.ModeAct {
+		if p.Mode != ipc.ModeWatch && p.Mode != ipc.ModeAssist {
 			s.writeErr(conn, "unknown mode: "+string(p.Mode))
 			return
 		}

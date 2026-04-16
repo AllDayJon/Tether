@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"tether/internal/ipc"
+	"github.com/AllDayJon/Tether/internal/ipc"
 
 	"github.com/spf13/cobra"
 )
